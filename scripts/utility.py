@@ -29,13 +29,20 @@ class Logger(object):
 sys.stdout = Logger(os.path.join(project_path, 'temp', "output.log"), sys.stdout)
 sys.stderr = Logger(os.path.join(project_path, 'temp', "errors.log"), sys.stderr)
 
-def catch_exception(fun):
-    '''decorator for checking exception'''
+def udf(fun):
+    '''decorator for user defined function called by VBA'''
+    
     def wrapper(*args, **kwargs):
         res = None
         try:
             res = fun(*args, **kwargs)
         except Exception as e:
             sys.stderr.write(str(e))
+        else:
+            if res: sys.stdout.write(str(res))
         return res
+
+    # set a tag that fun is decorated
+    setattr(wrapper, 'UDF', True)
+
     return wrapper

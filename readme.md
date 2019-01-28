@@ -73,13 +73,13 @@ End Sub
 
 ```python
 # scripts/test.py
-from .utility import catch_exception
+from .utility import udf
 
-@catch_exception
+@udf
 def division(a, b):
 	assert a!='', 'cell A1 is empty'
 	assert b!='', 'cell A2 is empty'
 	return float(a)/float(b)
 ```
 
-The decarator `catch_exception` is useful to catch exception and write it to error file `temp/errors.log`. The return value is written to `temp/output.log` if everything is OK. `errors.log` and `output.log` would be checked by VBA function `RunPython`.
+The decarator `udf` is required for user defined callback. It writes the return value to `temp/output.log` if everything is OK, or catchs exception and write it to error file `temp/errors.log`. The return value is . `errors.log` and `output.log` would be checked by VBA function `RunPython`.

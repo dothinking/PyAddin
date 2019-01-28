@@ -37,9 +37,10 @@ if __name__ == '__main__':
 		# import method
 		if hasattr(module, m[-1]):
 			f = getattr(module, m[-1])
-			res = f(*args)
-			if res != None:
-				sys.stdout.write(str(res))
+			if hasattr(f, 'UDF'):
+				f(*args)
+			else:
+				sys.stderr.write('Please decorate your callback function with @udf')
 		else:
 			sys.stderr.write('Error Python method "{0}"'.format(m[-1]))
 	else:
