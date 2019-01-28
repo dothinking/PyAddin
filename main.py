@@ -19,8 +19,11 @@ import os
 main_path = os.path.dirname(os.path.abspath(__file__)) 
 sys.path.append(main_path)
 
-from scripts import utility
+from scripts.utility import Logger
 
+# redirect output/error to files
+sys.stdout = Logger(os.path.join(main_path, 'temp', "output.log"), sys.stdout)
+sys.stderr = Logger(os.path.join(main_path, 'temp', "errors.log"), sys.stderr)
 
 if __name__ == '__main__':
 
