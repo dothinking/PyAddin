@@ -1,8 +1,8 @@
 # this is the interface between VBA and python, which is called
 # by VBA function:
 # 
-# args = Array("package.module.method", arg1, arg2, ...)
-# res = RunPython(args)
+# args = Array(arg1, arg2, ...)
+# true_or_false = RunPython("package.module.method", args, res)
 # 
 # actually the command below is executed in the background:
 # 
@@ -12,6 +12,7 @@
 # temp files, which are results of running python
 # 
 # 2019.01
+# 
 
 import sys
 import os
@@ -19,32 +20,61 @@ import os
 main_path = os.path.dirname(os.path.abspath(__file__)) 
 sys.path.append(main_path)
 
-from scripts.utility import Logger
+class Logger(object):
+    '''redirect standard output/error to files, which are bridges for
+    communication between python and VBA
+    '''
+     
+    def __init__(self, log_file="out.log", terminal=sys.stdout):
+        self.terminal = terminal
+        self.log = open(log_file, "w")
+ 
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+ 
+    def flush(self):
+        pass
 
-# redirect output/error to files
-sys.stdout = Logger(os.path.join(main_path, 'temp', "output.log"), sys.stdout)
-sys.stderr = Logger(os.path.join(main_path, 'temp', "errors.log"), sys.stderr)
+def redirect(fun):
+    '''decorator for user defined function called by VBA'''
+    
+    def wrapper(*args, **kwargs):
+        res = None
+        try:
+            res = fun(*args, **kwargs)
+        except Exception as e:
+            sys.stderr.write(str(e))
+        else:
+            if res: sys.stdout.write(str(res))
+        return res
+
+    return wrapper
+
+@redirect
+def run_python_method(key, *args):
+	'''call method specified by key with arguments: args
+	'''
+	*modules_name, method_name = key.split('.')
+	module_file = os.path.join(main_path, '{0}.py'.format('/'.join(modules_name)))
+
+	# import module dynamically if exists
+	module_path = '.'.join(modules_name)
+	assert os.path.exists(module_file), 'Error Python module "{0}"'.format(module_path)
+	module = __import__(module_path, fromlist=True)
+
+	# import method if exists
+	assert hasattr(module, method_name), 'Error Python method "{0}"'.format(method_name)
+	fun = getattr(module, method_name)
+
+	return fun(*args)
+
 
 if __name__ == '__main__':
 
+	# redirect output/error to output.log/errors.log
+	sys.stdout = Logger(os.path.join(main_path, 'temp', "output.log"), sys.stdout)
+	sys.stderr = Logger(os.path.join(main_path, 'temp', "errors.log"), sys.stderr)
+
 	# python main.py package.module.method *args
-	key, *args = sys.argv[1:]
-
-	m = key.split('.')
-	module_file = os.path.join(main_path, '{0}.py'.format('/'.join(m[:-1])))
-	if os.path.exists(module_file):
-
-		# import module dynamically
-		module = __import__('.'.join(m[:-1]), fromlist=True)
-
-		# import method
-		if hasattr(module, m[-1]):
-			f = getattr(module, m[-1])
-			if hasattr(f, 'UDF'):
-				f(*args)
-			else:
-				sys.stderr.write('Please decorate your callback function with @udf')
-		else:
-			sys.stderr.write('Error Python method "{0}"'.format(m[-1]))
-	else:
-		sys.stderr.write('Error Python module "{0}"'.format('.'.join(m[:-1])))
+	run_python_method(sys.argv[1], *sys.argv[2:])
