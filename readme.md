@@ -73,13 +73,9 @@ End Sub
 
 ```python
 # scripts/test.py
-from .utility import udf
 
-@udf
 def division(a, b):
 	assert a!='', 'cell A1 is empty'
 	assert b!='', 'cell A2 is empty'
 	return float(a)/float(b)
 ```
-
-The decarator `udf` is required for user defined callback. It writes the return value to `temp/output.log` if everything is OK, or write error message to `temp/errors.log` if exception catched . `errors.log` and `output.log` would be checked by VBA function `RunPython`.
