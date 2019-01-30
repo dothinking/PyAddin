@@ -1,16 +1,10 @@
 # PyAddin
 
-PyAddin is an Excel addin combining with VBA and Python. VBA calls Python by console arguments, and gets return from 
-temp files, which are results of running python.
+PyAddin is an Excel addin template with customized Ribbon menu and a combination of VBA and Python. VBA calls Python script by console arguments, and gets return from running results. So it's easily extended to your own application.
 
 **Shown with VBA and Driven by Python**
 
 ---
-
-## Features
-
-- combine VBA with Python
-- embedded Python
 
 ## Quick Start
 
