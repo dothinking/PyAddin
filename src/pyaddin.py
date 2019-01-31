@@ -9,6 +9,8 @@ RES_ADDIN = 'addin'
 RES_PYTHON = 'python'
 RES_VBA = 'vba'
 CUSTOMUI = 'customUI.yaml'
+VBA_GRNERAL = 'general'
+VBA_MENU = 'menu'
 
 
 def init_project(path):
@@ -56,9 +58,10 @@ def create_addin(path, addin_name='addin', vba_only=False):
 	shutil.rmtree(dest_addin)	
 
 	# convert to addin *.xlam
-	shutil.move('{0}.zip'.format(base_name), '{0}.xlam'.format(base_name))
+	addin_file = '{0}.xlam'.format(base_name)
+	shutil.move('{0}.zip'.format(base_name), addin_file)
 
-	# include callback function for customed menu button
+	# create callback function module for customed menu button
 	callbacks = []
 	for tab, groups in dict_ui.items():
 		for group, btns in groups.items():
@@ -66,36 +69,68 @@ def create_addin(path, addin_name='addin', vba_only=False):
 				callbacks.append(attrs.get('onAction', None))
 
 
+	cb_template = """
+Sub {callback}(control As IRibbonControl)
+    '''
+    ' TO DO
+    '
+    '''     
+End Sub\n
+"""
 	
+	menu_module = '{0}.bas'.format(VBA_MENU)
+	with open(menu_module, 'w') as f:
+		# header
+		with open(os.path.join(RES_PATH, RES_VBA, menu_module), 'r') as ff:
+			f.write(ff.read())
 
+		# callback functions
+		for cb in callbacks:
+			f.write(cb_template.format(callback=cb))
+
+
+
+	# import menu module to addin
 	xl = win32com.client.Dispatch("Excel.Application")
 	xl.Visible = 0
 	xl.DisplayAlerts = 0
 
-	xl.Workbooks.Add
-	wb = xl.Workbooks.open('D:/book1.xlsm')
-	# wb.VBProject.VBComponents.Import('D:/src/Book1.xlsm/Module1.bas')
+	for x in xl.Workbooks:
+		print(x)
+	wb = xl.Workbooks.open(os.path.join(path, addin_file))
+	wb.VBProject.VBComponents.Import(os.path.join(path, menu_module))
+
+	if not vba_only:
+		# thisworkbook
+		workbook_module = os.path.join(RES_PATH, RES_VBA, 'ThisWorkbook.cls')
+		with open(workbook_module, 'r') as f:
+			wb_module_string = f.read()
+		xlmodule = wb.VBProject.VBComponents("ThisWorkbook")
+		xlmodule.CodeModule.AddFromString(wb_module_string)
+
+		# general module
+		general_module = os.path.join(RES_PATH, RES_VBA, '{0}.bas'.format(VBA_GRNERAL))
+		wb.VBProject.VBComponents.Import(os.path.join(path, general_module))
 
 	# xl.Application.Run('Module1.test')
 
-	for c in wb.VBProject.VBComponents:
-		if c.Type != 1: continue
-		print(c.Name)
-		num = c.CodeModule.CountOfLines
-		src = str(c.CodeModule.Lines(0,num)).split('\n')
-		for line in src:
-			print(line)
-		print('*'*20, '\n')
+	# for c in wb.VBProject.VBComponents:
+	# 	if c.Type != 1: continue
+	# 	print(c.Name)
+	# 	num = c.CodeModule.CountOfLines
+	# 	src = str(c.CodeModule.Lines(0,num)).split('\n')
+	# 	for line in src:
+	# 		print(line)
+	# 	print('*'*20, '\n')
 
 	xl.DisplayAlerts = False
 	wb.DoNotPromptForConvert = True
 	wb.CheckCompatibility = False
 
 	wb.Save()
-
 	xl.Application.Quit()
-	del xl
-	xl = None
+
+	os.remove(menu_module)
 
 	if vba_only:
 		return
@@ -119,7 +154,8 @@ def update_addin():
 
 def _create_custom_ui_xml(dict_ui):
 	'''join CustomUI.xml'''
-	ui_xml = '''<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui">
+	ui_xml = '''
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui">
   <ribbon startFromScratch="false">
     <tabs>
     {0}

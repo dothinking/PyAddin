@@ -1,6 +1,12 @@
 Attribute VB_Name = "general"
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-' GENERAL FUNCTION FOR PYADDIN
+' GENERAL FUNCTIONS CREATED AUTOMATICALLY BY PYADDIN
+'
+' RunPython(python_method_name, args, res) is a pre-defined VBA function to call 
+' Python scripts from command line, and check return from output/error file generated 
+' by the called Python script. 
+'
+' https://github.com/dothinking/PyAddin
 '
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
@@ -93,9 +99,16 @@ Sub GetConfig()
     ' get configuration data from main.cfg
     '
     '''
-    Dim str As String
+    Dim cfg_path As String, str As String
+
+    cfg_path = ThisWorkbook.Path & "\" & CFG_FILE
+
+    If Dir(cfg_path, 16) = Empty Then
+        PYTHON_PATH = ""
+        Exit Sub
+    End If
         
-    Open ThisWorkbook.Path & "\" & CFG_FILE For Input As #1
+    Open cfg_path For Input As #1
     Do While Not EOF(1)
         Line Input #1, str
         str = Trim(str)
