@@ -8,41 +8,28 @@ PyAddin is an Excel addin template with customized Ribbon menu and a combination
 
 ## Quick Start
 
-1. Customize the Ribbon Tab by editing the embedded `pyAddin.xlam\customUI\CustomUI.xml`
+1. Set Python path for this addin
 
-```xml
-<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui">
-  <ribbon startFromScratch="false">
-    <tabs>
-      <tab id="userRibbon" label="PyAddin">
-        <group id="g1" label="My Test">
-            <button id="btn_cal" 
-              imageMso="Calculator" 
-              size="large" 
-              label="A1/A2" 
-              onAction="callback_cal"/>
-        </group>
-          
-        <group id="g2" label="About">
-            <button id="btn_about" 
-              imageMso="About" 
-              size="large" 
-              label="About" 
-              onAction="callback_about"/>
-        </group>
-      </tab>
-    </tabs>
-  </ribbon>
-</customUI>
+If embeddable Python is applied, a relative path would be recommended.
+
+```
+# common line starts with #
+# set path for python interpreter
+# relative path is allowable
+
+[python]
+\python\python.exe
 ```
 
-2. Add user defined callback in VBA project
+2. Fill VBA callback functions generated automatically by [`autoUI`](../autoUI)
 
 ```vba
 Sub callback_cal(control As IRibbonControl)
 
     '''
-    ' get value in cell A1, A2, then calculate A1/A2 in python
+    ' This Sub is created by `AUTOUI`, please fill the body manually,
+    ' where you could use pre-defined function `RunPython()` to call
+    ' specified python script.
     '
     '''
     

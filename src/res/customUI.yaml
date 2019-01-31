@@ -1,0 +1,50 @@
+# configuration for ribbom tab of Excel addin
+# 
+# a basic structure:
+# 
+# tab_name_1:
+# 
+#   group_name_1:
+#     button_name_11:
+#       imageMso: ~
+#       size: large
+#       onAction: callback_fun_11
+#     button_name_12:
+#       imageMso:
+#       size: large
+#       onAction: callback_fun_12
+# 
+#   group_name_2:
+#     button_name_21:
+#       imageMso: ~
+#       size: large
+#       onAction: callback_fun_21
+#     button_name_22:
+#       imageMso: ~
+#       size: large
+#       onAction: callback_fun_22
+# 
+# tab_name_2:
+#   ...
+#
+tab_name_1:
+
+  group_name_1:
+    button_name_11:
+      imageMso: ~
+      size: large
+      onAction: callback_fun_11
+    button_name_12:
+      imageMso:
+      size: large
+      onAction: callback_fun_12
+
+  group_name_2:
+    button_name_21:
+      imageMso: ~
+      size: large
+      onAction: callback_fun_21
+    button_name_22:
+      imageMso: ~
+      size: large
+      onAction: callback_fun_22

@@ -1,5 +1,4 @@
-python/
-
+dist*/
 
 *.pyc
 *.log
