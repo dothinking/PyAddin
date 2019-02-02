@@ -2,9 +2,9 @@ Attribute VB_Name = "general"
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' GENERAL FUNCTIONS CREATED AUTOMATICALLY BY PYADDIN
 '
-' RunPython(python_method_name, args, res) is a pre-defined VBA function to call 
-' Python scripts from command line, and check return from output/error file generated 
-' by the called Python script. 
+' RunPython(python_method_name, args, res) is a pre-defined VBA function to call
+' Python scripts from command line, and check return from output/error file generated
+' by the called Python script.
 '
 ' https://github.com/dothinking/PyAddin
 '
@@ -13,8 +13,11 @@ Attribute VB_Name = "general"
 ' global parameters
 Public Const CFG_FILE = "main.cfg"
 
-Public TEMP_PATH As String 'defined on the loading of this addin
 Public PYTHON_PATH As String
+Public OUTPUT_PATH As String
+Public STDOUT As String
+Public STDERR As String
+
 
 Function RunPython(method_name As String, args, ByRef res As String) As Boolean
     '''
@@ -53,8 +56,8 @@ Function RunPython(method_name As String, args, ByRef res As String) As Boolean
     oShell.Run cmd, 0, 1
     
     ' results
-    log_output = TEMP_PATH & "output.log"
-    log_errors = TEMP_PATH & "errors.log"
+    log_output = OUTPUT_PATH & STDOUT
+    log_errors = OUTPUT_PATH & STDERR
     errs = ReadTextFile(log_errors)
     
 OUTPUT:
@@ -100,11 +103,14 @@ Sub GetConfig()
     '
     '''
     Dim cfg_path As String, str As String
+    
+    PYTHON_PATH = ""
+    OUTPUT_PATH = ThisWorkbook.Path & "\" & "outputs" & "\"
+    STDOUT = "output.log"
+    STDERR = "errors.log"
 
     cfg_path = ThisWorkbook.Path & "\" & CFG_FILE
-
     If Dir(cfg_path, 16) = Empty Then
-        PYTHON_PATH = ""
         Exit Sub
     End If
         
@@ -112,7 +118,11 @@ Sub GetConfig()
     Do While Not EOF(1)
         Line Input #1, str
         str = Trim(str)
+        
+        ' skip empty line o comment line
         If str = "" Or str Like "[#]*" Then
+        
+        ' python path
         ElseIf str = "[python]" Then
             Line Input #1, str
             str = Trim(str)
@@ -125,6 +135,22 @@ Sub GetConfig()
             Else
                 PYTHON_PATH = str
             End If
+        
+        ' output path
+        ElseIf str = "[output]" Then
+            Line Input #1, str
+            str = Trim(str)
+            If Not str Like "[#]*" Then OUTPUT_PATH = ThisWorkbook.Path & "\" & str & "\"
+            
+        ' standard output/error
+        ElseIf str = "[stdout]" Then
+            Line Input #1, str
+            str = Trim(str)
+            If Not str Like "[#]*" Then STDOUT = str
+        ElseIf str = "[stderr]" Then
+            Line Input #1, str
+            str = Trim(str)
+            If Not str Like "[#]*" Then STDERR = str
         End If
     Loop
     Close #1

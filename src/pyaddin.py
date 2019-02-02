@@ -2,6 +2,7 @@ import os
 import shutil
 import yaml
 import win32com.client
+from pyvba import UICreator, VBAWriter
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__)) 
 RES_PATH = os.path.join(SCRIPT_PATH, 'res')
@@ -14,167 +15,119 @@ VBA_MENU = 'menu'
 
 
 def init_project(path):
-	'''initialize ui config file under path
-	'''
+    '''initialize ui config file under path
+    '''
 
-	ui_file = os.path.join(RES_PATH, CUSTOMUI)
-	shutil.copy(ui_file, path)
+    ui_file = os.path.join(RES_PATH, CUSTOMUI)
+    shutil.copy(ui_file, path)
 
 def create_addin(path, addin_name='addin', vba_only=False):
-	'''create addin:
-		- customize ribbon tab and associated VBA callback according to ui file
-		- include VBA modules for VBA-Python addin
-	'''
-
-	# check
-	ui_file = os.path.join(path, CUSTOMUI)
-	if not os.path.exists(ui_file):
-		raise Exception('Can not find {0} under current path.'.format(CUSTOMUI))
-
-	with open(ui_file, 'r') as f:
-		dict_ui = yaml.load(f)
-
-	if not dict_ui:
-		raise Exception('Empty {0}'.format(CUSTOMUI))
-
-	# join ui xml
-	ui_xml = _create_custom_ui_xml(dict_ui)
-
-	# combine ui xml to addin xml
-	source_addin = os.path.join(RES_PATH, RES_ADDIN)
-	dest_addin = os.path.join(path, RES_ADDIN)
-	ui_path = os.path.join(dest_addin, 'customUI')
-	if os.path.isdir(dest_addin):
-		shutil.rmtree(dest_addin)
-	shutil.copytree(source_addin, dest_addin)
-
-	os.mkdir(ui_path)
-	with open(os.path.join(ui_path, 'CustomUI.xml'), 'w') as f:
-		f.write(ui_xml)
-
-	# achive and remove original package
-	base_name = addin_name.replace('.xlam', '')
-	shutil.make_archive(base_name, 'zip', dest_addin)
-	shutil.rmtree(dest_addin)	
-
-	# convert to addin *.xlam
-	addin_file = '{0}.xlam'.format(base_name)
-	shutil.move('{0}.zip'.format(base_name), addin_file)
-
-	# create callback function module for customed menu button
-	callbacks = []
-	for tab, groups in dict_ui.items():
-		for group, btns in groups.items():
-			for btn, attrs in btns.items():
-				callbacks.append(attrs.get('onAction', None))
-
-
-	cb_template = """
-Sub {callback}(control As IRibbonControl)
+    '''create addin:
+        - customize ribbon tab and associated VBA callback according to ui file
+        - include VBA modules for VBA-Python addin
+        :param path: path for the addin to be created
+        :param addin_name: name of the addin to be created
     '''
-    ' TO DO
-    '
-    '''     
-End Sub\n
-"""
-	
-	menu_module = '{0}.bas'.format(VBA_MENU)
-	with open(menu_module, 'w') as f:
-		# header
-		with open(os.path.join(RES_PATH, RES_VBA, menu_module), 'r') as ff:
-			f.write(ff.read())
 
-		# callback functions
-		for cb in callbacks:
-			f.write(cb_template.format(callback=cb))
+    # parse UI dict from customed file
+    dict_ui = _parse_UI(path)
 
+    # create addin with customed ui
+    addin = UICreator(path, addin_name)
+    addin.create(os.path.join(RES_PATH, RES_ADDIN), dict_ui)
 
+    if not os.path.exists(addin.addin_file):
+        raise Exception('Create Addin structures failed.')
 
-	# import menu module to addin
-	xl = win32com.client.Dispatch("Excel.Application")
-	xl.Visible = 0
-	xl.DisplayAlerts = 0
+    # VBA writer
+    vba = VBAWriter(addin.addin_file)
+    try:
+        # import menu module
+        # create callback function module for customed menu button
+        callbacks = []
+        for tab, groups in dict_ui.items():
+            for group, btns in groups.items():
+                for btn, attrs in btns.items():
+                    callbacks.append(attrs.get('onAction', None))
+        vba.add_callbacks(VBA_MENU, callbacks, os.path.join(RES_PATH, RES_VBA, '{0}.bas'.format(VBA_MENU)))
 
-	for x in xl.Workbooks:
-		print(x)
-	wb = xl.Workbooks.open(os.path.join(path, addin_file))
-	wb.VBProject.VBComponents.Import(os.path.join(path, menu_module))
+        # extra steps for VBA-Python combined addin
+        if not vba_only:
+            # import workbook module
+            workbook_module = os.path.join(RES_PATH, RES_VBA, 'ThisWorkbook.cls')
+            vba.import_named_module("ThisWorkbook", workbook_module)
 
-	if not vba_only:
-		# thisworkbook
-		workbook_module = os.path.join(RES_PATH, RES_VBA, 'ThisWorkbook.cls')
-		with open(workbook_module, 'r') as f:
-			wb_module_string = f.read()
-		xlmodule = wb.VBProject.VBComponents("ThisWorkbook")
-		xlmodule.CodeModule.AddFromString(wb_module_string)
+            # import general module
+            general_module = os.path.join(RES_PATH, RES_VBA, '{0}.bas'.format(VBA_GRNERAL))
+            vba.import_module(general_module)
 
-		# general module
-		general_module = os.path.join(RES_PATH, RES_VBA, '{0}.bas'.format(VBA_GRNERAL))
-		wb.VBProject.VBComponents.Import(os.path.join(path, general_module))
+            # copy main python scripts
+            _copy_all(os.path.join(RES_PATH, RES_PYTHON), path)
 
-	# xl.Application.Run('Module1.test')
+    except Exception as e:
+        print(e)
+    finally:
+        vba.quit()
 
-	# for c in wb.VBProject.VBComponents:
-	# 	if c.Type != 1: continue
-	# 	print(c.Name)
-	# 	num = c.CodeModule.CountOfLines
-	# 	src = str(c.CodeModule.Lines(0,num)).split('\n')
-	# 	for line in src:
-	# 		print(line)
-	# 	print('*'*20, '\n')
+def update_addin(path, addin_name='addin'):
+    '''update Ribbon Tab and associated callback functions for addin with `addin_name` 
+    under `path` according to `customUI.yaml`
+    ：param path: addin path
+    :param addin_name: name of addin to be updated under current `path`
+    '''
 
-	xl.DisplayAlerts = False
-	wb.DoNotPromptForConvert = True
-	wb.CheckCompatibility = False
+    # parse UI dict from customed file
+    dict_ui = _parse_UI(path)
 
-	wb.Save()
-	xl.Application.Quit()
+    # create addin with customed ui
+    addin = UICreator(path, addin_name)
+    addin.update(dict_ui)
 
-	os.remove(menu_module)
+    if not os.path.exists(addin.addin_file):
+        raise Exception('Update Addin ribbon tab structures failed.')
 
-	if vba_only:
-		return
+    # VBA writer
+    vba = VBAWriter(addin.addin_file)
+    try:
+        # update menu module
+        # get new callback functions
+        callbacks = []
+        for tab, groups in dict_ui.items():
+            for group, btns in groups.items():
+                for btn, attrs in btns.items():
+                    callbacks.append(attrs.get('onAction', None))
 
+        vba.update_callbacks(VBA_MENU, callbacks)
 
-
-	
-
-	# print(ui_xml)
-
-
-
-
-
-
-def update_addin():
-	pass
-
+    except Exception as e:
+        print(e)
+    finally:
+        vba.quit()
 
 
+def _parse_UI(path):
+    '''parse UI dict from yaml file'''
+    ui_file = os.path.join(path, CUSTOMUI)
+    if not os.path.exists(ui_file):
+        raise Exception('Can not find {0} under current path.'.format(CUSTOMUI))
 
-def _create_custom_ui_xml(dict_ui):
-	'''join CustomUI.xml'''
-	ui_xml = '''
-<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui">
-  <ribbon startFromScratch="false">
-    <tabs>
-    {0}
-    </tabs>
-  </ribbon>
-</customUI>'''
-	
-	# tab
-	tabs_xml = ''
-	for i, (tab, groups) in enumerate(dict_ui.items(), start=1):
-		# group
-		groups_xml = ''
-		for j, (group, btns) in enumerate(groups.items(), start=1):
-			# button
-			btns_xml = ''
-			for k, (btn, attrs) in enumerate(btns.items(), start=1):
-				btn_attrs = ['{0}="{1}"'.format(key,val) for key,val in attrs.items() if val]
-				btns_xml += '<button id="btn_{0}_{1}_{2}" label="{3}" {4}/>\n'.format(i, j, k, btn, ' '.join(btn_attrs))
-			groups_xml += '<group id="group_{0}_{1}" label="{2}">\n{3}</group>\n'.format(i, j, group, btns_xml)
-		tabs_xml += '<tab id="tab_{0}" label="{1}">\n{2}</tab>\n'.format(i, tab, groups_xml)	
+    with open(ui_file, 'r') as f:
+        dict_ui = yaml.load(f)
 
-	return ui_xml.format(tabs_xml)
+    if not dict_ui:
+        raise Exception('Empty {0}'.format(CUSTOMUI))
+
+    return dict_ui
+
+def _copy_all(path, out):
+    '''copy all files and dirs under path to out
+    '''
+    for files in os.listdir(path):
+        name = os.path.join(path, files)
+        back_name = os.path.join(out, files)
+        if os.path.isfile(name):
+            shutil.copy(name, back_name)
+        else:
+            if not os.path.isdir(back_name):
+                os.makedirs(back_name)
+            _copy_all(name, back_name)

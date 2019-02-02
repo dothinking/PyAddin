@@ -169,7 +169,7 @@ End Sub\n
                 f.write(initial_codes)
 
             # callback functions
-            for cb in callbacks:
+            for cb in list_cb:
                 if not (initial_codes and 'Sub {0}('.format(cb) in initial_codes):
                     f.write(cb_template.format(callback=cb))
 
@@ -269,7 +269,7 @@ if __name__ == '__main__':
     VBA_GRNERAL = 'general'
     VBA_MENU = 'menu'
 
-    path = os.path.join(os.path.dirname(SCRIPT_PATH), 'dist')
+    path = os.path.join(os.path.dirname(SCRIPT_PATH), 'test')
     ui_file = os.path.join(path, CUSTOMUI)
     with open(ui_file, 'r') as f:
         dict_ui = yaml.load(f)
@@ -283,13 +283,13 @@ if __name__ == '__main__':
 
     # create addin with customed ui
     addin = UICreator(path, 'myaddin')
-    # addin.create(RES_ADDIN, dict_ui)
+    addin.create(RES_ADDIN, dict_ui)
 
     # VBA writer
     vba = VBAWriter(addin.addin_file)
     try:
         # import menu module
-        # vba.add_callbacks(VBA_MENU, callbacks, os.path.join(RES_VBA, '{0}.bas'.format(VBA_MENU)))
+        vba.add_callbacks(VBA_MENU, callbacks, os.path.join(RES_VBA, '{0}.bas'.format(VBA_MENU)))
 
         # import workbook module
         workbook_module = os.path.join(RES_VBA, 'ThisWorkbook.cls')
@@ -300,7 +300,7 @@ if __name__ == '__main__':
         vba.import_module(general_module)
 
         # update module
-        vba.update_callbacks(VBA_MENU, callbacks.append('test122'))
+        vba.update_callbacks(VBA_MENU, callbacks.append('test02'))
 
     except Exception as e:
         print(e)

@@ -10,7 +10,7 @@ def main():
 	'''commands:
 		pyaddin init
 		pyaddin create --name --vba
-		pyaddin update --path
+		pyaddin update --name
 	'''		
 
 	if len(sys.argv) == 1:
@@ -19,9 +19,8 @@ def main():
 	# parse arguments
 	parser = argparse.ArgumentParser()
 	parser.add_argument('operation', choices=['init', 'create', 'update'], help='init, create, update')
-	parser.add_argument('-n','--name', default='addin', help='addin file name to be created: [name].xlam')
+	parser.add_argument('-n','--name', default='addin', help='addin file name to be created/updated: [name].xlam')
 	parser.add_argument('-v','--vba', action='store_true', help='create VBA addin only, otherwise VBA-Python addin by default')
-	parser.add_argument('-p','--path', default='addin.xlam', help='path of addin file to be updated')
 	args = parser.parse_args()
 
 	# do what you need
@@ -31,7 +30,7 @@ def main():
 	elif args.operation == 'create':
 		create_addin(current_path, args.name, args.vba)
 	elif args.operation == 'update':
-		update_addin(current_path, args.path)
+		update_addin(current_path, args.name)
 
 if __name__ == '__main__':
 	try:

@@ -53,28 +53,47 @@ def redirect(fun):
 
 @redirect
 def run_python_method(key, *args):
-	'''call method specified by key with arguments: args
-	'''
-	*modules_name, method_name = key.split('.')
-	module_file = os.path.join(main_path, '{0}.py'.format('/'.join(modules_name)))
+    '''call method specified by key with arguments: args
+    '''
+    *modules_name, method_name = key.split('.')
+    module_file = os.path.join(main_path, '{0}.py'.format('/'.join(modules_name)))
 
-	# import module dynamically if exists
-	module_path = '.'.join(modules_name)
-	assert os.path.exists(module_file), 'Error Python module "{0}"'.format(module_path)
-	module = __import__(module_path, fromlist=True)
+    # import module dynamically if exists
+    module_path = '.'.join(modules_name)
+    assert os.path.exists(module_file), 'Error Python module "{0}"'.format(module_path)
+    module = __import__(module_path, fromlist=True)
 
-	# import method if exists
-	assert hasattr(module, method_name), 'Error Python method "{0}"'.format(method_name)
-	fun = getattr(module, method_name)
+    # import method if exists
+    assert hasattr(module, method_name), 'Error Python method "{0}"'.format(method_name)
+    fun = getattr(module, method_name)
 
-	return fun(*args)
+    return fun(*args)
 
 
 if __name__ == '__main__':
 
-	# redirect output/error to output.log/errors.log
-	sys.stdout = Logger(os.path.join(main_path, 'temp', "output.log"), sys.stdout)
-	sys.stderr = Logger(os.path.join(main_path, 'temp', "errors.log"), sys.stderr)
+    # get output folder name from main.cfg
+    output = 'outputs'
+    output_file, error_file = "output.log", "errors.log"
+    with open(os.path.join(main_path, 'main.cfg'), 'r') as f:
+        while True:
+            line = f.readline().strip()
+            if not line:
+                break
+            elif line.startswith('[output]'):
+                output = f.readline().strip()
+            elif line.startswith('[stdout]'):
+                output_file = f.readline().strip()
+            elif line.startswith('[stderr]'):
+                error_file = f.readline().strip()
 
-	# python main.py package.module.method *args
-	run_python_method(sys.argv[1], *sys.argv[2:])
+    output_path = os.path.join(main_path, output)
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+
+    # redirect output/error to output.log/errors.log
+    sys.stdout = Logger(os.path.join(output_path, output_file), sys.stdout)
+    sys.stderr = Logger(os.path.join(output_path, error_file), sys.stderr)
+
+    # python main.py package.module.method *args
+    run_python_method(sys.argv[1], *sys.argv[2:])
