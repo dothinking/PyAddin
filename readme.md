@@ -1,27 +1,121 @@
 # PyAddin
 
-PyAddin is an Excel addin template with customized Ribbon menu and a combination of VBA and Python. VBA calls Python script by console arguments, and gets return from running results. So it's easily extended to your own application.
+PyAddin is an Excel addin template with customized Ribbon menu and a combination of VBA and Python. VBA calls Python script by console arguments, and gets return from running results. So it could be easily extended to your own application.
 
 **Shown with VBA and Driven by Python**
 
 ---
 
-## Quick Start
+## Create Addin Template
 
-1. Set Python path for this addin
+1. Initialize project
 
-If embeddable Python is applied, a relative path would be recommended.
+```
+D:\GitHub\PyAddin>mkdir dist
+D:\GitHub\PyAddin>cd dist
+D:\GitHub\PyAddin\dist>python D:\GitHub\PyAddin\src\main.py init
+```
+
+2. Customize Ribbon Tab
+
+Check `customUI.yaml` created automatically in Step 1 and define the UI structures as needed.
+
+```xml
+# configuration for ribbom tab of Excel addin
+# 
+# a basic structure:
+# 
+# tab_name_1:
+# 
+#   group_name_1:
+#     button_name_11:
+#       imageMso: ~
+#       size: large
+#       onAction: callback_fun_11
+#     button_name_12:
+#       imageMso:
+#       size: large
+#       onAction: callback_fun_12
+# 
+#   group_name_2:
+#     button_name_21:
+#       imageMso: ~
+#       size: large
+#       onAction: callback_fun_21
+#     button_name_22:
+#       imageMso: ~
+#       size: large
+#       onAction: callback_fun_22
+# 
+# tab_name_2:
+#   ...
+#
+PyAddin Test:
+
+  GROUP_1:
+    Cal_division:
+      imageMso: Calculator
+      size: large
+      onAction: callback_cal
+    Cal_multiply:
+      imageMso: ~
+      size: large
+      onAction: callback_mtp
+
+  HELP:
+    About:
+      imageMso: About
+      size: large
+      onAction: callback_about
+```
+
+3. Create Addin
+
+```
+D:\GitHub\PyAddin\dist>python D:\GitHub\PyAddin\src\main.py create --name my_first_addin
+```
+
+The main addin file `my_first_addin.xlam`, as well as some dependent files are created under `dist`:
+
+- `main.py` interface for VBA function `RunPython()` to call user defined Python scripts
+- `main.cfg` configuration for this addin template, including Python interpreter path
+- `scripts` default package for user defined Python scripts
+
+4. Update Addin
+
+Update `CustomUI.yaml` and run command below to update both the ribbon tab and callback definitions of associated menu button.
+
+```
+D:\GitHub\PyAddin\dist>python D:\GitHub\PyAddin\src\main.py update --name my_first_addin
+```
+
+
+## Develop Your Addin
+
+1. Setting path for Python interpreter
+
+Check `main.cfg` and set Python path. If embeddable Python is applied, a relative path would be recommended.
 
 ```
 # common line starts with #
+
 # set path for python interpreter
 # relative path is allowable
-
 [python]
 \python\python.exe
+
+# default folder name for outputs
+[output]
+outputs
+
+# standard output/error files name under [output]
+[stdout]
+output.log
+[stderr]
+errors.log
 ```
 
-2. Fill VBA callback functions generated automatically by [`autoUI`](../autoUI)
+2. Fill VBA callback functions
 
 ```vba
 Sub callback_cal(control As IRibbonControl)
