@@ -1,9 +1,8 @@
 import os
 import sys
 import argparse
-import yaml
 
-from pyaddin import init_project, create_addin, update_addin
+from .src.pyaddin import init_project, create_addin, update_addin
 
 
 def main():
@@ -34,8 +33,6 @@ def main():
 
 if __name__ == '__main__':
 	try:
-		main()
-	except yaml.YAMLError as e:
-	    print('Error format for UI configuration file: {0}'.format(str(e)))	        
+		main()	        
 	except Exception as e:
 		print(e)

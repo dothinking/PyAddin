@@ -23,7 +23,7 @@ Private Sub Workbook_BeforeClose(Cancel As Boolean)
     ' clean output files
     '
     '''
-    
-    If OUTPUT_PATH <> "" And Dir(OUTPUT_PATH & "*", 16) <> "." Then Kill OUTPUT_PATH & "*"
+    On Error Resume Next
+    If OUTPUT_PATH <> "" And Dir(OUTPUT_PATH, vbDirectory) <> Empty Then Kill OUTPUT_PATH & "*.*"
     
 End Sub

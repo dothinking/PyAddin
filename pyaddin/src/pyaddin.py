@@ -2,10 +2,10 @@ import os
 import shutil
 import yaml
 import win32com.client
-from pyvba import UICreator, VBAWriter
+from .pyvba import UICreator, VBAWriter
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__)) 
-RES_PATH = os.path.join(SCRIPT_PATH, 'res')
+RES_PATH = os.path.join(os.path.dirname(SCRIPT_PATH), 'res')
 RES_ADDIN = 'addin'
 RES_PYTHON = 'python'
 RES_VBA = 'vba'
@@ -65,7 +65,7 @@ def create_addin(path, addin_name='addin', vba_only=False):
             _copy_all(os.path.join(RES_PATH, RES_PYTHON), path)
 
     except Exception as e:
-        print(e)
+        raise e
     finally:
         vba.quit()
 
@@ -100,7 +100,7 @@ def update_addin(path, addin_name='addin'):
         vba.update_callbacks(VBA_MENU, callbacks)
 
     except Exception as e:
-        print(e)
+        raise e
     finally:
         vba.quit()
 
@@ -112,7 +112,10 @@ def _parse_UI(path):
         raise Exception('Can not find {0} under current path.'.format(CUSTOMUI))
 
     with open(ui_file, 'r') as f:
-        dict_ui = yaml.load(f)
+        try:
+            dict_ui = yaml.load(f)
+        except yaml.YAMLError as e:
+            raise Exception('Error format for UI configuration file: {0}'.format(str(e))) 
 
     if not dict_ui:
         raise Exception('Empty {0}'.format(CUSTOMUI))
