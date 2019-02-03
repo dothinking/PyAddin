@@ -1,5 +1,11 @@
-dist*/
+# building results
+build/
+dist/
+*egg-info/
+
+# test
 test/
 
+# temp file
 *.pyc
 *.log
