@@ -1,6 +1,6 @@
 # PyAddin
 
-PyAddin is an Excel addin template with customized Ribbon menu and a combination of VBA and Python. VBA calls Python script by console arguments, and gets return from running results. So it could be easily extended to your own application.
+`PyAddin` is an Excel addin template with customized Ribbon menu and a combination of VBA and Python. VBA calls Python script by console arguments, and gets return from running results. So it could be easily extended to your own application.
 
 **Shown with VBA and Driven by Python**
 
@@ -10,7 +10,7 @@ PyAddin is an Excel addin template with customized Ribbon menu and a combination
 
 Python3, argparse, PyYaml, pywin32
 
-## Install
+## Install and Uninstall
 
 Navigate to root directoty and install this package:
 
@@ -22,6 +22,12 @@ Or install it in developing mode:
 
 ```
 python setup.py develop
+```
+
+Uninstall `pyaddin` via `pip`:
+
+```
+pip uninstall pyaddin
 ```
 
 ## Usage
@@ -119,12 +125,7 @@ errors.log
 - Fill VBA callback functions
 
 ```vba
-Sub callback_cal(control As IRibbonControl)
-
-    '''
-    ' TODO
-    '
-    '''
+Sub callback_cal(control As IRibbonControl
     
     Dim a1$, a2$, args, res$
     
