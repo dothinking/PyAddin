@@ -1,6 +1,6 @@
 import os
 import shutil
-import yaml
+import xml.etree.ElementTree as ET
 import win32com.client
 from .pyvba import UICreator, VBAWriter
 
@@ -9,7 +9,7 @@ RES_PATH = os.path.join(os.path.dirname(SCRIPT_PATH), 'res')
 RES_ADDIN = 'addin'
 RES_PYTHON = 'python'
 RES_VBA = 'vba'
-CUSTOMUI = 'customUI.yaml'
+CUSTOMUI = 'CustomUI.xml'
 VBA_GRNERAL = 'general'
 VBA_MENU = 'menu'
 
@@ -29,12 +29,12 @@ def create_addin(path, addin_name='addin', vba_only=False):
         :param addin_name: name of the addin to be created
     '''
 
-    # parse UI dict from customed file
-    dict_ui = _parse_UI(path)
+    # check CustomUI.xml -> get callback functions
+    callbacks = _get_callbacks_from_CustomUI(path)
 
     # create addin with customed ui
     addin = UICreator(path, addin_name)
-    addin.create(os.path.join(RES_PATH, RES_ADDIN), dict_ui)
+    addin.create(os.path.join(RES_PATH, RES_ADDIN), os.path.join(path, CUSTOMUI))
 
     if not os.path.exists(addin.addin_file):
         raise Exception('Create Addin structures failed.')
@@ -44,11 +44,6 @@ def create_addin(path, addin_name='addin', vba_only=False):
     try:
         # import menu module
         # create callback function module for customed menu button
-        callbacks = []
-        for tab, groups in dict_ui.items():
-            for group, btns in groups.items():
-                for btn, attrs in btns.items():
-                    callbacks.append(attrs.get('onAction', None))
         vba.add_callbacks(VBA_MENU, callbacks, os.path.join(RES_PATH, RES_VBA, '{0}.bas'.format(VBA_MENU)))
 
         # extra steps for VBA-Python combined addin
@@ -77,26 +72,20 @@ def update_addin(path, addin_name='addin'):
     '''
 
     # parse UI dict from customed file
-    dict_ui = _parse_UI(path)
+    callbacks = _get_callbacks_from_CustomUI(path)
 
     # create addin with customed ui
     addin = UICreator(path, addin_name)
-    addin.update(dict_ui)
+    addin.update(os.path.join(path, CUSTOMUI))
 
     if not os.path.exists(addin.addin_file):
-        raise Exception('Update Addin ribbon tab structures failed.')
+        raise Exception('Update Addin custom UI failed.')
 
     # VBA writer
     vba = VBAWriter(addin.addin_file)
     try:
         # update menu module
         # get new callback functions
-        callbacks = []
-        for tab, groups in dict_ui.items():
-            for group, btns in groups.items():
-                for btn, attrs in btns.items():
-                    callbacks.append(attrs.get('onAction', None))
-
         vba.update_callbacks(VBA_MENU, callbacks)
 
     except Exception as e:
@@ -105,22 +94,28 @@ def update_addin(path, addin_name='addin'):
         vba.quit()
 
 
-def _parse_UI(path):
-    '''parse UI dict from yaml file'''
+def _get_callbacks_from_CustomUI(path):
+    '''parse CustomUI.xml to collect all callback function names -> attribute=onAction'''
+
     ui_file = os.path.join(path, CUSTOMUI)
     if not os.path.exists(ui_file):
         raise Exception('Can not find {0} under current path.'.format(CUSTOMUI))
-
-    with open(ui_file, 'r') as f:
+    else:
         try:
-            dict_ui = yaml.load(f)
-        except yaml.YAMLError as e:
-            raise Exception('Error format for UI configuration file: {0}'.format(str(e))) 
+            tree = ET.parse(ui_file)
+        except ET.ParseError as e:
+            raise Exception('Error format in {0}: {1}'.format(CUSTOMUI, str(e)))
+        else:
+            root = tree.getroot()
 
-    if not dict_ui:
-        raise Exception('Empty {0}'.format(CUSTOMUI))
+    # get root and check all nodes by iteration
+    attr_name = 'onAction'    
+    callbacks = [node.attrib.get(attr_name) for node in root.iter() if attr_name in node.attrib]
 
-    return dict_ui
+    if not callbacks:
+        raise Exception('Please check {0}: no defined actions'.format(CUSTOMUI))
+
+    return callbacks
 
 def _copy_all(path, out):
     '''copy all files and dirs under path to out

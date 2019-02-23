@@ -55,27 +55,28 @@ D:\GitHub\PyAddin\examples>pyaddin init
 
 2. Customize Ribbon Tab
 
-Check `customUI.yaml` created automatically in Step 1 and define [UI structures](pyaddin/res/customUI.yaml) as needed.
+Check `CustomUI.xml` created automatically in Step 1 and define UI structures in [pre-defined format](https://docs.microsoft.com/en-us/previous-versions/office/developer/office-2007/aa338202(v%3doffice.12)#general-format-of-xml-markup-files).
 
-```yaml
-# configuration for ribbom tab of Excel addin
-# Examples:
+```xml
+<!--
+Add custom UI definition between <tabs> and </tabs>, e.g.
 
-PyAddin Test:
-  GROUP_1:
-    Cal_division:
-      imageMso: Calculator
-      size: large
-      onAction: callback_cal
-    Cal_multiply:
-      imageMso: ~
-      size: large
-      onAction: callback_mtp
-  HELP:
-    About:
-      imageMso: About
-      size: large
-      onAction: callback_about
+<tab id="userRibbon" label="PyAddin">
+  <group id="group_about" label="About">
+    <button id="about" imageMso="About" size="large" label="About" onAction="callback_about"/>
+  </group>
+</tab>
+
+Please refer to the link below for detail:
+https://docs.microsoft.com/en-us/previous-versions/office/developer/office-2007/aa338202(v%3doffice.12)
+ -->
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui">
+  <ribbon startFromScratch="false">
+    <tabs>
+
+    </tabs>
+  </ribbon>
+</customUI>
 ```
 
 3. Create/Update Addin

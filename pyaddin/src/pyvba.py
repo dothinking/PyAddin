@@ -15,26 +15,11 @@ class UICreator:
         self.path = path
         self.name = name.replace('.xlam', '')
         self.addin_file = os.path.join(self.path, '{0}.xlam'.format(self.name))
-        self.xml_ui = None
 
-    def create(self, xml_path, dict_ui={}):
+    def create(self, xml_path, xml_customui):
         '''combine CustomUI.xml with source xml files
         :param xml_path: directory for template xml files extracted from base addin *.xlam
-        :param dict_ui: ui structures regarding tab, group, button
-            tab_name_1:{            
-              group_name_1:{
-                button_name_11:{
-                  imageMso: ~
-                  size: large
-                  onAction: callback_fun_11
-                },
-                button_name_12:{
-                  imageMso:
-                  size: large
-                  onAction: callback_fun_12
-                }
-              }
-            }
+        :param xml_customui: CustomUI.xml
         '''
         # e.g. xml_path = /path/to/xnl_dir ->
         # dest_xml_path = self.path/xml_dir
@@ -49,13 +34,10 @@ class UICreator:
             shutil.copytree(xml_path, dest_xml_path)
 
         # customUI under destination path
-        self.custom_ui(dict_ui)
-        if self.xml_ui:
-            dest_ui_path = os.path.join(dest_xml_path, 'customUI')
-            if not os.path.exists(dest_ui_path):
-                os.mkdir(dest_ui_path)
-            with open(os.path.join(dest_ui_path, 'CustomUI.xml'), 'w') as f:
-                f.write(self.xml_ui)
+        dest_ui_path = os.path.join(dest_xml_path, 'customUI')
+        if not os.path.exists(dest_ui_path):
+            os.mkdir(dest_ui_path)
+        shutil.copy(xml_customui, dest_ui_path)
 
         # achive xml files and remove original package
         shutil.make_archive(os.path.join(self.path, self.name), 'zip', dest_xml_path)
@@ -65,8 +47,8 @@ class UICreator:
         zip_file = '{0}.zip'.format(self.name)
         shutil.move(os.path.join(self.path, zip_file), self.addin_file)
 
-    def update(self, dict_ui={}):
-        '''update current addin ribbon with structures defined in dict_ui'''
+    def update(self, xml_customui):
+        '''update current addin ribbon with CustomUI.xml defined by xml_customui'''
 
         if not os.path.exists(self.addin_file):
             raise Exception('Current addin does not exist yet.')
@@ -78,46 +60,7 @@ class UICreator:
         shutil.unpack_archive(zip_file, xml_path)
 
         # recreate
-        self.create(xml_path, dict_ui)
-
-    def custom_ui(self, dict_ui):
-        '''join CustomUI.xml
-        :param dict_ui: dict structure of tab, group, button
-        '''
-        xml_ui = '''
-<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui">
-  <ribbon startFromScratch="false">
-    <tabs>
-    {0}
-    </tabs>
-  </ribbon>
-</customUI>'''
-
-        tab_template = '<tab id="tab_{0}" label="{1}">\n{2}</tab>\n'
-        group_template = '<group id="group_{0}" label="{1}">\n{2}</group>\n'
-        button_template = '<button id="btn_{0}" label="{1}" {2}/>\n'
-        
-        # tab
-        tabs_xml = ''
-        for i, (tab, groups) in enumerate(dict_ui.items(), start=1):
-            # group
-            groups_xml = ''
-            for j, (group, btns) in enumerate(groups.items(), start=1):
-                # button
-                btns_xml = ''
-                for k, (btn, attrs) in enumerate(btns.items(), start=1):
-                    btn_attrs = ['{0}="{1}"'.format(key,val) for key,val in attrs.items() if val]
-                    btn_id = '{0}_{1}_{2}'.format(i, j, k)
-                    btns_xml += button_template.format(btn_id, btn, ' '.join(btn_attrs))
-
-                group_id = '{0}_{1}'.format(i, j)
-                groups_xml += group_template.format(group_id, group, btns_xml)
-
-            tabs_xml += tab_template.format(i, tab, groups_xml) 
-
-        self.xml_ui = xml_ui.format(tabs_xml)
-
-
+        self.create(xml_path, xml_customui)
 
 class VBAWriter:
 
@@ -258,32 +201,24 @@ End Sub\n
 
 if __name__ == '__main__':
 
-    import yaml
-    
-    SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__)) 
+    import traceback
+   
+    SCRIPT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     RES_PATH = os.path.join(SCRIPT_PATH, 'res')
     RES_ADDIN = os.path.join(RES_PATH, 'addin')
     RES_PYTHON = os.path.join(RES_PATH, 'python')
     RES_VBA = os.path.join(RES_PATH, 'vba')
-    CUSTOMUI = 'customUI.yaml'
+    CUSTOMUI = 'CustomUI.xml'
     VBA_GRNERAL = 'general'
     VBA_MENU = 'menu'
 
     path = os.path.join(os.path.dirname(SCRIPT_PATH), 'test')
     ui_file = os.path.join(path, CUSTOMUI)
-    with open(ui_file, 'r') as f:
-        dict_ui = yaml.load(f)
-
-    # create callback function module for customed menu button
-    callbacks = []
-    for tab, groups in dict_ui.items():
-        for group, btns in groups.items():
-            for btn, attrs in btns.items():
-                callbacks.append(attrs.get('onAction', None))
+    callbacks = ['hello_word', 'about']
 
     # create addin with customed ui
     addin = UICreator(path, 'myaddin')
-    addin.create(RES_ADDIN, dict_ui)
+    addin.create(RES_ADDIN, ui_file)
 
     # VBA writer
     vba = VBAWriter(addin.addin_file)
@@ -300,10 +235,11 @@ if __name__ == '__main__':
         vba.import_module(general_module)
 
         # update module
-        vba.update_callbacks(VBA_MENU, callbacks.append('test02'))
+        callbacks.append('test02')
+        vba.update_callbacks(VBA_MENU, callbacks)
 
     except Exception as e:
-        print(e)
+        traceback.print_exc()
     finally:
         vba.quit()
 
