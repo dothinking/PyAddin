@@ -8,7 +8,7 @@
 
 ## Requirements
 
-Python3, argparse, PyYaml, pywin32
+Python3, argparse, pywin32
 
 ## Install and Uninstall
 
@@ -91,7 +91,7 @@ The main addin file `my_first_addin.xlam`, as well as some dependent files are c
 - `main.cfg` configuration for this addin template, including Python interpreter path
 - `scripts` default package for user defined Python scripts
 
-If you want to add more features to your addin later, update `CustomUI.yaml` first and run command below to update both the ribbon tab and callback definitions.
+If you want to add more features to your addin later, update `CustomUI.xml` first and run command below to update both the ribbon tab and callback definitions.
 
 ```
 D:\GitHub\PyAddin\examples>pyaddin update --name my_first_addin
