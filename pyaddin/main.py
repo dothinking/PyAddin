@@ -1,34 +1,65 @@
 import os
-import sys
-import argparse
+import shutil
+import logging
+from .addin import (Addin, RESOURCE_PATH, CUSTOM_UI)
 
-from .src.pyaddin import init_project, create_addin, update_addin
+
+class PyAddin:
+    '''Command line interface for ``PyAddin``.'''
+
+    @staticmethod
+    def init():
+        '''Initialize project and set current path as working path.'''
+        ui_file = os.path.join(RESOURCE_PATH, CUSTOM_UI)
+        work_path = os.getcwd()
+        shutil.copy(ui_file, work_path)
+    
+
+    @staticmethod
+    def create(name:str='addin', vba:bool=False, quiet:bool=True):
+        '''Create add-in file (name.xlam) based on ribbon UI file (CustomUI.xml) under working path.
+        
+        Args:
+            name (str) : the name of add-in to create (without the suffix ``.xlam``).
+            vba (bool): create VBA add-in only if True, otherwise VBA-Python addin by default.
+            quiet (bool): perform the process in the background if True.
+        '''
+        filename = os.path.join(os.getcwd(), f'{name}.xlam')
+        addin = Addin(xlam_file=filename, visible=not quiet)
+
+        try:
+            addin.create(vba_only=vba)
+        except Exception as e:
+            logging.error(e)
+            addin.close()
+        else:
+            if quiet: addin.close()
+
+
+    @staticmethod
+    def update(name:str='addin', quiet:bool=True):
+        '''Update add-in file (name.xlam) based on ribbon UI file (CustomUI.xml) under working path.
+        
+        Args:
+            name (str) : the name of add-in to update (without the suffix ``.xlam``).
+            quiet (bool): perform the process in the background if True.
+        '''
+        filename = os.path.join(os.getcwd(), f'{name}.xlam')
+        addin = Addin(xlam_file=filename, visible=not quiet)
+
+        try:
+            addin.update()
+        except Exception as e:
+            logging.error(e)
+            addin.close()
+        else:
+            if quiet: addin.close()
 
 
 def main():
-    '''commands:
-        pyaddin init
-        pyaddin create --name --vba
-        pyaddin update --name
-    '''
-    try:
-        if len(sys.argv) == 1:
-            sys.argv.append('--help')
+    import fire
+    fire.Fire(PyAddin)
 
-        # parse arguments
-        parser = argparse.ArgumentParser()
-        parser.add_argument('operation', choices=['init', 'create', 'update'], help='init, create, update')
-        parser.add_argument('-n','--name', default='addin', help='addin file name to be created/updated: [name].xlam')
-        parser.add_argument('-v','--vba', action='store_true', help='create VBA addin only, otherwise VBA-Python addin by default')
-        args = parser.parse_args()
 
-        # do what you need
-        current_path = os.getcwd()
-        if args.operation == 'init':        
-            init_project(current_path)
-        elif args.operation == 'create':
-            create_addin(current_path, args.name, args.vba)
-        elif args.operation == 'update':
-            update_addin(current_path, args.name)
-    except Exception as e:
-        print(e)
+if __name__ == '__main__':
+    main()
