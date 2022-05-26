@@ -4,7 +4,7 @@ Attribute VB_Name = "ribbon"
 '
 ' This Sub is created by `PYADDIN`, please fill the body manually,
 ' where you could use pre-defined function `RunPython()` to call
-' specified python script. 
+' specified python script.
 '
 ' https://github.com/dothinking/PyAddin
 '
@@ -15,12 +15,10 @@ Public myRibbon As IRibbonUI
 Sub RibbonOnLoad(ByVal ribbon As IRibbonUI)
     ' store Ribbon instance
     Set myRibbon = ribbon
-
-    ' load configuration    
+    ' load configuration
     Call GetConfig
-
     ' clear output path
-    If OUTPUT_PATH <> "" And Dir(OUTPUT_PATH, vbDirectory) <> Empty Then Kill OUTPUT_PATH & "*.*"    
+    Call ClearOutput
 End Sub
 
 
@@ -29,9 +27,10 @@ Sub CB_Test(control As IRibbonControl)
     ' TO DO
     '
     '''
-    Dim res$    
-    Call RunPython("scripts.sample.hello_world", Array(), res)    
-    Range("A1") = res
+    Dim res As Object
+    x = Range("A1").Value
+    Set res = RunPython("scripts.sample.hello_world", x, 10)
+    Range("A2") = res("value")
     
 End Sub
 
@@ -41,6 +40,7 @@ Sub CB_SetInterpreter(control As IRibbonControl, text As String)
     ' TO DO
     '
     '''
+    SetConfig "python", text
 End Sub
 
 
@@ -58,6 +58,7 @@ Sub CB_SetOutputPath(control As IRibbonControl, text As String)
     ' TO DO
     '
     '''
+    SetConfig "output", text
 End Sub
 
 
@@ -97,4 +98,3 @@ Sub CB_About(control As IRibbonControl)
     MsgBox "[TODO]: Your Tool Description Here.", vbInformation, "About"
     
 End Sub
-
