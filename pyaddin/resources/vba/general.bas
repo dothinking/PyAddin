@@ -44,12 +44,13 @@ Function RunPython(method_name As String, args, ByRef res As String) As Boolean
     End If
     
     ' join command
+    Dim Name$: Name = ActiveWorkbook.Name
     PYTHON = """" & PYTHON_PATH & """ "
     main = """" & ThisWorkbook.Path & "\main.py"" "
     For i = LBound(args) To UBound(args)
         str_args = str_args & " """ & args(i) & """"
     Next
-    cmd = PYTHON & main & method_name & str_args
+    cmd = PYTHON & main & " " & Name & " " & method_name & str_args
     
     ' execute command
     Set oShell = CreateObject("WScript.Shell")

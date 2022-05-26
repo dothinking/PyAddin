@@ -8,15 +8,27 @@ class PyAddin:
     '''Command line interface for ``PyAddin``.'''
 
     @staticmethod
-    def init():
-        '''Initialize project and set current path as working path.'''
-        ui_file = os.path.join(RESOURCE_PATH, CUSTOM_UI)
+    def init(name:str):
+        '''Create directory with specified name under current path, and create a template ribbon UI file.
+        
+        Args:
+            name (str) : project name, i.e., new folder name.
+        '''
+        # new project
         work_path = os.getcwd()
-        shutil.copy(ui_file, work_path)
+        project_path = os.path.join(work_path, name)
+        if os.path.exists(project_path): 
+            logging.error(f'Project {name} already existed.')
+            return
+        os.mkdir(project_path)
+
+        # template UI file
+        ui_file = os.path.join(RESOURCE_PATH, CUSTOM_UI)        
+        shutil.copy(ui_file, project_path)
     
 
     @staticmethod
-    def create(name:str='addin', vba:bool=False, quiet:bool=True):
+    def create(name:str, vba:bool=False, quiet:bool=True):
         '''Create add-in file (name.xlam) based on ribbon UI file (CustomUI.xml) under working path.
         
         Args:
@@ -37,7 +49,7 @@ class PyAddin:
 
 
     @staticmethod
-    def update(name:str='addin', quiet:bool=True):
+    def update(name:str, quiet:bool=True):
         '''Update add-in file (name.xlam) based on ribbon UI file (CustomUI.xml) under working path.
         
         Args:

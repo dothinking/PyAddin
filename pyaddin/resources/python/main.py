@@ -16,9 +16,55 @@
 
 import sys
 import os
+import win32com.client
+import context
 
 main_path = os.path.dirname(os.path.abspath(__file__)) 
 sys.path.append(main_path)
+
+
+def redirect(fun):
+    '''decorator for user defined function called by VBA'''
+    
+    def wrapper(*args, **kwargs):
+        res = None
+        try:
+            res = fun(*args, **kwargs)
+        except Exception as e:
+            sys.stderr.write(str(e))
+        else:
+            if res: sys.stdout.write(str(res))
+        return res
+
+    return wrapper
+
+
+@redirect
+def run_python_method(caller_name:str, key:str, *args):
+    '''call method specified by key with arguments: args
+
+    Args:
+        caller_name (str): Workbook name calling this script.
+        key (str): script path: package.module.method.
+    '''
+    *modules_name, method_name = key.split('.')
+    module_file = os.path.join(main_path, f'{"/".join(modules_name)}.py')
+
+    # import module dynamically if exists
+    module_path = '.'.join(modules_name)
+    assert os.path.exists(module_file), 'Error Python module "{0}"'.format(module_path)
+    module = __import__(module_path, fromlist=('blabla'), globals={'name': 100})
+
+    # import method if exists
+    assert hasattr(module, method_name), 'Error Python method "{0}"'.format(method_name)
+    fun = getattr(module, method_name)
+
+    # store caller workbook
+    wb = get_caller_workbook(caller_name)
+    context.set_caller(wb)
+
+    return fun(*args)
+
 
 class Logger(object):
     '''redirect standard output/error to files, which are bridges for
@@ -36,41 +82,25 @@ class Logger(object):
     def flush(self):
         pass
 
-def redirect(fun):
-    '''decorator for user defined function called by VBA'''
-    
-    def wrapper(*args, **kwargs):
-        res = None
-        try:
-            res = fun(*args, **kwargs)
-        except Exception as e:
-            sys.stderr.write(str(e))
-        else:
-            if res: sys.stdout.write(str(res))
-        return res
 
-    return wrapper
+def get_caller_workbook(name:str):
+    '''Get Workbook instance (win32com) by name.
 
-@redirect
-def run_python_method(key, *args):
-    '''call method specified by key with arguments: args
+    Args:
+        name (str): Workbook name.
     '''
-    *modules_name, method_name = key.split('.')
-    module_file = os.path.join(main_path, '{0}.py'.format('/'.join(modules_name)))
+    app = win32com.client.Dispatch('Excel.Application')
+    for wb in app.Workbooks:
+        if wb.Name == name: return wb
+    return None
 
-    # import module dynamically if exists
-    module_path = '.'.join(modules_name)
-    assert os.path.exists(module_file), 'Error Python module "{0}"'.format(module_path)
-    module = __import__(module_path, fromlist=True)
 
-    # import method if exists
-    assert hasattr(module, method_name), 'Error Python method "{0}"'.format(method_name)
-    fun = getattr(module, method_name)
-
-    return fun(*args)
 
 
 if __name__ == '__main__':
+
+    # start context
+    context.start()
 
     # get output folder name from main.cfg
     output = 'outputs'
@@ -96,4 +126,4 @@ if __name__ == '__main__':
     sys.stderr = Logger(os.path.join(output_path, error_file), sys.stderr)
 
     # python main.py package.module.method *args
-    run_python_method(sys.argv[1], *sys.argv[2:])
+    run_python_method(sys.argv[1], sys.argv[2], *sys.argv[3:])

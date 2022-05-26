@@ -1,19 +1,52 @@
 <!--
-Add custom UI definition between <tabs> and </tabs>, e.g.
+Custom UI definition. Please refer to the links below for detail.
+- https://docs.microsoft.com/en-us/openspecs/office_standards/ms-customui/edc80b05-9169-4ff7-95ee-03af067f35b1
+- https://docs.microsoft.com/en-us/previous-versions/office/developer/office-2007/aa338202(v%3doffice.12)
+-->
 
-<tab id="userRibbon" label="PyAddin">
-	<group id="group_about" label="About">
-		<button id="about" imageMso="About" size="large" label="About" onAction="callback_about"/>
-	</group>
-</tab>
-
-Please refer to the link below for detail:
-https://docs.microsoft.com/en-us/previous-versions/office/developer/office-2007/aa338202(v%3doffice.12)
- -->
-<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui">
+<customUI onLoad="RibbonOnLoad" xmlns="http://schemas.microsoft.com/office/2006/01/customui">
 	<ribbon startFromScratch="false">
 		<tabs>
+			<tab id="AddinMakerTab" label="Addin Maker">
+				<group id="yourGroup1" label="Your Group 1">
+					<!-- MODIFY YOUR RIBBON CONTROL HERE -->
+					<button id="sample" label="Sample" 
+						imageMso="Help" size="large" 
+						onAction="CB_Test" 
+						screentip="Test" 
+						supertip="Sample Button." />
+				</group>
 
+				<group id="yourGroup2" label="Your Group 2">
+					<!-- MORE GROUPS IF NECESSARY -->
+					
+				</group>
+
+				<!-- DON'T CHANGE THE FOLLOWING ITEMS  -->
+				<group id="settingsGroup" label="Setting">					
+					<editBox id="interpreter" label="Python Interpreter" 
+						onChange="CB_SetInterpreter" 
+						getText="CB_GetInterpreter" 
+						screentip="Interpreter" 
+						supertip="The full path to python.exe." />
+					<editBox id="output" label="Output Path" 
+						onChange="CB_SetOutputPath" 
+						getText="CB_GetOutputPath" 
+						screentip="Output Path" 
+						supertip="Output path for result and log files." />
+					<button id="refresh" label="Refresh" 
+						imageMso="Help" size="normal" 
+						onAction="CB_Refresh" 
+						screentip="Refresh" 
+						supertip="Reload all settings." />
+					<separator id="s1"/>
+					<button id="about" label="About" 
+						imageMso="Help" size="large" 
+						onAction="CB_About" 
+						screentip="About" 
+						supertip="About this Add-in, e.g., features, version." />
+				</group>
+			</tab>
 		</tabs>
 	</ribbon>
 </customUI>

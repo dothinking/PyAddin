@@ -22,8 +22,7 @@ RESOURCE_PYTHON = 'python'
 RESOURCE_VBA = 'vba'
 
 VBA_GENERAL = 'general'
-VBA_MENU = 'menu'
-VBA_WORKBOOK = 'ThisWorkbook'
+VBA_MENU = 'ribbon'
 
 CUSTOM_UI = 'CustomUI.xml'
 
@@ -77,7 +76,7 @@ class Addin:
         vba = VBA(xlam_file=self.xlam_file, excel_app=self.excel_app)
         base_menu = os.path.join(RESOURCE_PATH, RESOURCE_VBA, f'{VBA_MENU}.bas')
 
-        # 1. import menu module
+        # 1. import ribbon module
         logging.info('(2/%d) Creating menu callback subroutines...', N)
 
         # create callback function module for customized menu button
@@ -88,15 +87,11 @@ class Addin:
         if not vba_only:
             logging.info('(3/%d) Creating Python-VBA interaction modules...', N)
 
-            # 2. import workbook module
-            workbook_module = os.path.join(RESOURCE_PATH, RESOURCE_VBA, f'{VBA_WORKBOOK}.cls')
-            vba.import_named_module(VBA_WORKBOOK, workbook_module)
-
-            # 3. import general module
+            # 2. import general module
             general_module = os.path.join(RESOURCE_PATH, RESOURCE_VBA, f'{VBA_GENERAL}.bas')
             vba.import_module(general_module)
 
-            # 4. copy main python scripts
+            # 3. copy main python scripts
             python_module = os.path.join(RESOURCE_PATH, RESOURCE_PYTHON)
             copytree(python_module, self.path)
         

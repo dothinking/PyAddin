@@ -5,6 +5,7 @@ dist/
 
 # test
 test/
+sample/
 
 # temp file
 *.pyc
