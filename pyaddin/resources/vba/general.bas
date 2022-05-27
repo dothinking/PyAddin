@@ -23,6 +23,7 @@ Public Const KEY_PYTHON = "python"
 Public Const KEY_OUTPUT = "output"
 Public Const KEY_STDOUT = "stdout"
 Public Const KEY_STDERR = "stderr"
+Public Const KEY_RIBBON = "ribbon"
 
 Public PYTHON_PATH As String
 Public OUTPUT_PATH As String
@@ -223,7 +224,7 @@ Function RestoreRibbon()
     ' Restore Ribbon UI instance from stored pointer.
     '
     '''
-    Dim p As Long: p = GetConfig("ribbon")
+    Dim p As Long: p = GetConfig(KEY_RIBBON)
 
     Dim ribbon As Object
     Call CopyMemory(ribbon, p, 4)

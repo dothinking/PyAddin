@@ -1,7 +1,6 @@
 import os
 import logging
 import shutil
-import xml.etree.ElementTree as ET
 import win32com.client
 from .xlam.ui import UI
 from .xlam.vba import VBA
@@ -23,8 +22,9 @@ RESOURCE_PYTHON = 'scripts'
 RESOURCE_VBA = 'vba'
 PYTHON_MAIN = 'main.py'
 PYTHON_CONFIG = 'main.cfg'
-VBA_GENERAL = 'general'
-VBA_MENU = 'ribbon'
+VBA_GENERAL = 'General'
+VBA_MENU = 'Ribbon'
+VBA_USER_MENU = 'UserRibbon'
 CUSTOM_UI = 'CustomUI.xml'
 
 
@@ -63,7 +63,7 @@ class Addin:
         '''
         N = 2 if vba_only else 3
 
-        # create addin file
+        # 1 create addin file
         logging.info('(1/%d) Creating add-in structure...', N)
         ui = UI(self.xlam_file)
         template = os.path.join(RESOURCE_PATH, RESOURCE_ADDIN)
@@ -73,16 +73,15 @@ class Addin:
         if not os.path.exists(self.xlam_file):
             raise AddInException('Create add-in structures failed.')
 
-        # update VBA module
+        # 2 update VBA modules
         vba = VBA(xlam_file=self.xlam_file, excel_app=self.excel_app)
-        base_menu = os.path.join(RESOURCE_PATH, RESOURCE_VBA, f'{VBA_MENU}.bas')
 
-        # 1. import ribbon module
+        # 2.1 import ribbon module
         logging.info('(2/%d) Creating menu callback subroutines...', N)
-
-        # create callback function module for customized menu button
-        callbacks = self.__get_callbacks_from_custom_ui()
-        vba.add_callbacks(VBA_MENU, callbacks, base_menu)
+        base_menu = os.path.join(RESOURCE_PATH, RESOURCE_VBA, f'{VBA_MENU}.bas')
+        user_menu = os.path.join(RESOURCE_PATH, RESOURCE_VBA, f'{VBA_USER_MENU}.bas')
+        vba.import_module(base_menu)
+        vba.import_module(user_menu)
 
         # extra steps for VBA-Python combined addin
         if not vba_only:
@@ -108,49 +107,9 @@ class Addin:
 
 
     def update(self):
-        '''Update Ribbon and associated callback functions.
-
-        NOTE: only update newly added callbacks. Editing existing callback names will be ignored.
-        '''
+        '''Update Ribbon UI. Note that the menu callback functions should be updated manually.'''
         # update addin with customized ui file
-        logging.info('(1/2) Updating ribbon structures...')
+        logging.info('(1/1) Updating ribbon structures...')
         custom_ui = os.path.join(self.path, CUSTOM_UI)
         ui = UI(self.xlam_file)
         ui.update(custom_ui)
-
-        # update VBA menu module
-        logging.info('(2/2) Updating menu callback subroutines...')
-        vba = VBA(xlam_file=self.xlam_file, excel_app=self.excel_app)
-        callbacks = self.__get_callbacks_from_custom_ui() # get new callback functions
-        vba.update_callbacks(VBA_MENU, callbacks)
-
-        # save vba modules
-        vba.save()
-
-
-    def __get_callbacks_from_custom_ui(self) -> list:
-        '''parse CustomUI.xml to collect all callback function names, e.g.,
-         - attribute=onAction for button, toggleButton and checkBox.
-         - attribute=onChange for editBox and comboBox.
-        '''
-        ui_file = os.path.join(self.path, CUSTOM_UI)
-        if not os.path.exists(ui_file):
-            raise AddInException(f'Can not find ribbon file: {CUSTOM_UI}.')
-
-        try:
-            tree = ET.parse(ui_file)
-        except ET.ParseError as e:
-            raise AddInException(f'Error format in {CUSTOM_UI}: {str(e)}')
-        else:
-            root = tree.getroot()
-
-        # get root and check all nodes by iteration
-        callbacks = []
-        for attr_name in ('onAction', 'onChange'):
-            callbacks.extend([node.attrib.get(attr_name) \
-                for node in root.iter() if attr_name in node.attrib])
-
-        if not callbacks:
-            raise AddInException(f'No actions defined: {CUSTOM_UI}')
-
-        return callbacks

@@ -2,17 +2,6 @@ import os
 from ..share import AddInException
 
 
-# menu callback function
-CB_TEMPLATE = """
-Sub {callback}(control As IRibbonControl)
-    '''
-    ' TO DO
-    '
-    '''
-End Sub\n
-"""
-
-
 class VBA:
 
     def __init__(self, xlam_file:str, excel_app):
@@ -35,51 +24,6 @@ class VBA:
     def save(self):
         '''Save add-in.'''
         self.wb.Save()
-
-
-    def add_callbacks(self, module_name:str, list_cb:list, base_module_file:str=''):
-        '''Add callback functions to specified module, combined with initial codes saved in
-        specified file.
-
-        Args:
-            module_name (str): module name to update.
-            list_cb (list): callback functions to add.
-            base_module_file (str, optional): initial module file to merge.
-        '''
-        # initial code
-        code = ''
-        if base_module_file and os.path.isfile(base_module_file):
-            with open(base_module_file, 'r') as f:
-                code = f.read()
-        
-        # add callback functions not included in the initial code
-        cbs = [CB_TEMPLATE.format(callback=cb) for cb in list_cb if f'Sub {cb}(' not in code]
-        code += '\n'.join(cbs)
-
-        # combined vba file
-        module_file = os.path.join(os.path.dirname(self.xlam_file), f'{module_name}.bas')
-        with open(module_file, 'w') as f:
-            f.write(code)
-        
-        # import module with file
-        self.import_module(module_file)
-        os.remove(module_file)
-
-
-    def update_callbacks(self, module_name:str, list_cb:str):
-        '''Update module with a list of callback functions. It will be skipped if a function has already 
-        existed in the module.
-
-        Args:
-            module_name (str): module name to update.
-            list_cb (str): callback functions to add.
-        '''
-        # export current module as a base line
-        module_file = os.path.join(os.path.dirname(self.xlam_file), f'{module_name}.bas')
-        self.export_module(module_name, module_file)
-
-        # merge code with the input callbacks
-        self.add_callbacks(module_name, list_cb, module_file)
 
 
     def import_module(self, module_file:str):

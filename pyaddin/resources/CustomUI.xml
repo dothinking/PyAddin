@@ -12,14 +12,14 @@ Custom UI definition. Please refer to the links below for detail.
 					<!-- MODIFY YOUR RIBBON CONTROL HERE -->
 					<button id="sample1" label="Sample 1" 
 						imageMso="AppointmentColor3" size="large" 
-						onAction="CB_Test_1" 
+						onAction="CB_Sample_1" 
 						screentip="Sample Button" 
-						supertip="Illustrating case that does everything in Python script with win32com." />
+						supertip="Example 1: simple data transferring between VBA and Python." />
 					<button id="sample2" label="Sample 2" 
 						imageMso="AppointmentColor6" size="large" 
-						onAction="CB_Test_2" 
+						onAction="CB_Sample_2" 
 						screentip="Sample Button" 
-						supertip="Illustrating case that transferring input and output between VBA and Python." />
+						supertip="Example 2: do anythng win32com can in Python script." />
 				</group>
 
 				<group id="yourGroup2" label="Your Group 2">

@@ -2,20 +2,20 @@ Attribute VB_Name = "Ribbon"
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' MENU CALLBACKS CREATED AUTOMATICALLY BY PYADDIN
 '
-' This Sub is created by `PYADDIN`, please fill the body manually,
-' where you could use pre-defined function `RunPython()` to call
-' specified python script.
+' This module is created by `PYADDIN`, supporting the default features, e.g. set Python
+' interpreter, load/refresh configuration.
 '
 ' https://github.com/dothinking/PyAddin
 '
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
 Public myRibbon As IRibbonUI
 
+
 Sub RibbonOnLoad(ByVal ribbon As IRibbonUI)
+    '''Initialization when loading Ribbon UI.'''
     ' store Ribbon instance
     Set myRibbon = ribbon
-    SetConfig "ribbon", ObjPtr(ribbon)
+    SetConfig KEY_RIBBON, ObjPtr(ribbon)
     
     ' load configuration
     Call LoadConfig
@@ -25,55 +25,21 @@ Sub RibbonOnLoad(ByVal ribbon As IRibbonUI)
 End Sub
 
 
-Sub CB_Test_1(control As IRibbonControl)
-    '''
-    ' TO DO
-    '
-    '''
-    Dim res As Object
-    Dim x As Integer: x = Range("A1").Value
-    Dim y As Integer: y = Range("A2").Value
-    
-    Set res = RunPython("scripts.sample.hello_world_1", x, y)
-    Range("A3") = res("value")
-    
-End Sub
-
-
-
-Sub CB_Test_2(control As IRibbonControl)
-    '''
-    ' TO DO
-    '
-    '''
-    RunPython "scripts.sample.hello_world_2"
-End Sub
-
-
 Sub CB_SetInterpreter(control As IRibbonControl, text As String)
-    '''
-    ' TO DO
-    '
-    '''
+    '''onChange for control: Python Interpreter'''
     SetConfig "python", text
     PYTHON_PATH = text
 End Sub
 
 
 Sub CB_GetInterpreter(control As IRibbonControl, ByRef returnedVal)
-    '''
-    ' TO DO
-    '
-    '''
+    '''getText for control: Python Interpreter'''
     returnedVal = PYTHON_PATH
 End Sub
 
 
 Sub CB_Refresh(control As IRibbonControl)
-    '''
-    ' TO DO
-    '
-    '''
+    '''onAction for control: Refresh Settings'''
     Call LoadConfig
     
     ' restore Ribbon instance in case VBA script was stop unexpectedly
@@ -84,10 +50,6 @@ End Sub
 
 
 Sub CB_About(control As IRibbonControl)
-    '''
-    ' TO DO
-    '
-    '''
-    MsgBox "[TODO]: Your Tool Description Here.", vbInformation, "About"
-    
+    '''onAction for control: About'''
+    MsgBox "[TODO]: Your Tool Description Here.", vbInformation, "About"    
 End Sub

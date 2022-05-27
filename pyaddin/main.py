@@ -8,11 +8,13 @@ class PyAddin:
     '''Command line interface for ``PyAddin``.'''
 
     @staticmethod
-    def init(name:str):
-        '''Create directory with specified name under current path, and create a template ribbon UI file.
+    def init(name:str, vba:bool=False, quiet:bool=True):
+        '''Create template project with specified name under current path.
         
         Args:
-            name (str) : project name, i.e., new folder name.
+            name (str) : the name of add-in to create (without the suffix ``.xlam``).
+            vba (bool): create VBA add-in only if True, otherwise VBA-Python addin by default.
+            quiet (bool): perform the process in the background if True.
         '''
         # new project
         work_path = os.getcwd()
@@ -25,18 +27,9 @@ class PyAddin:
         # template UI file
         ui_file = os.path.join(RESOURCE_PATH, CUSTOM_UI)        
         shutil.copy(ui_file, project_path)
-    
 
-    @staticmethod
-    def create(name:str, vba:bool=False, quiet:bool=True):
-        '''Create add-in file (name.xlam) based on ribbon UI file (CustomUI.xml) under working path.
-        
-        Args:
-            name (str) : the name of add-in to create (without the suffix ``.xlam``).
-            vba (bool): create VBA add-in only if True, otherwise VBA-Python addin by default.
-            quiet (bool): perform the process in the background if True.
-        '''
-        filename = os.path.join(os.getcwd(), f'{name}.xlam')
+        # template add-in based on UI template
+        filename = os.path.join(project_path, f'{name}.xlam')
         addin = Addin(xlam_file=filename, visible=not quiet)
 
         try:
