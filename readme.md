@@ -1,46 +1,66 @@
 # PyAddin
 
-`PyAddin` is an Excel addin template with customized Ribbon menu and a combination of VBA and Python. VBA calls Python script by console arguments, and gets return from running results. So it could be easily extended to your own application.
+VBA is not as popular as it used to be, while Excel is still widely used for holding, processing and reviewing data. Generally, an Excel file with macro (`*.xlsm`) is filled with data and embedded with complicated VBA scripts. The idea of this project is to split such Excel file into two separate parts: worksheets without macro (`*.xlsx`) as data container, and an Excel add-in (`*.xlam`) as computing engine.
 
-**Shown with VBA and Driven by Python**
+`PyAddin` is a command-line tool facilitating the creation of Excel add-in (*.xlam), with ability to process data with Python.
 
----
+- provides an Excel add-in template with customized Ribbon menu and a combination of VBA and Python. 
 
-## Requirements
+- helps to update the Ribbon UI during the development of your add-in.
 
-Python3, argparse, pywin32
+The main idea is VBA macro calling Python script by console arguments, then retrieving return value stored in a temporary file as a bridge. In addition, leverage the ability of `pywin32`, all the interaction with Excel, e.g., reading/writing cell data, setting cell format, could be completed in Python script.
 
-## Install and Uninstall
+## Limitation
 
-Navigate to root directoty and install this package:
+- Windows only
+- Microsoft Excel 2007+
+- Data transferring between VBA and Python is limited to simple **string** type
+- What you can do with Excel depends on `pywin32/win32com`
 
-```
-python setup.py install
-```
 
-Or install it in developing mode:
+## Installation
 
-```
-python setup.py develop
-```
+- Install from `Pypi` or local
 
-Uninstall `pyaddin` via `pip`:
+  ```
+  # pypi
+  pip install pyaddin
 
-```
-pip uninstall pyaddin
-```
+  # local  
+  python setup.py install
+
+  # local in development mode
+  python setup.py develop
+  ```
+
+- Uninstall
+
+  ```
+  pip uninstall pyaddin
+  ```
 
 ## Usage
 
 ```
-# initialize project
-pyaddin init
+> pyaddin -h
 
-# create Excel Addin
-pyaddin create --name my_first_addin
+NAME
+    pyaddin - Command line interface for ``PyAddin``.
 
-# update Excel Addin
-pyaddin update --name my_first_addin
+SYNOPSIS
+    pyaddin COMMAND | -
+
+DESCRIPTION
+    Command line interface for ``PyAddin``.
+
+COMMANDS
+    COMMAND is one of the following:
+
+     init
+       Create template project with specified name under current path.
+
+     update
+       Update add-in file (name.xlam) based on ribbon UI file (CustomUI.xml) under working path.
 ```
 
 ## Example - Create Addin Template
@@ -56,6 +76,8 @@ D:\GitHub\PyAddin\examples>pyaddin init
 2. Customize Ribbon Tab
 
 Check `CustomUI.xml` created automatically in Step 1 and define UI structures in [pre-defined format](https://docs.microsoft.com/en-us/previous-versions/office/developer/office-2007/aa338202(v%3doffice.12)#general-format-of-xml-markup-files).
+
+[more](https://docs.microsoft.com/en-us/openspecs/office_standards/ms-customui/edc80b05-9169-4ff7-95ee-03af067f35b1)
 
 ```xml
 <!--
