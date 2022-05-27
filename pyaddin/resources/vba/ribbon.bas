@@ -1,4 +1,4 @@
-Attribute VB_Name = "ribbon"
+Attribute VB_Name = "Ribbon"
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' MENU CALLBACKS CREATED AUTOMATICALLY BY PYADDIN
 '
@@ -15,23 +15,38 @@ Public myRibbon As IRibbonUI
 Sub RibbonOnLoad(ByVal ribbon As IRibbonUI)
     ' store Ribbon instance
     Set myRibbon = ribbon
+    SetConfig "ribbon", ObjPtr(ribbon)
+    
     ' load configuration
-    Call GetConfig
+    Call LoadConfig
+    
     ' clear output path
     Call ClearOutput
 End Sub
 
 
-Sub CB_Test(control As IRibbonControl)
+Sub CB_Test_1(control As IRibbonControl)
     '''
     ' TO DO
     '
     '''
     Dim res As Object
-    x = Range("A1").Value
-    Set res = RunPython("scripts.sample.hello_world", x, 10)
-    Range("A2") = res("value")
+    Dim x As Integer: x = Range("A1").Value
+    Dim y As Integer: y = Range("A2").Value
     
+    Set res = RunPython("scripts.sample.hello_world_1", x, y)
+    Range("A3") = res("value")
+    
+End Sub
+
+
+
+Sub CB_Test_2(control As IRibbonControl)
+    '''
+    ' TO DO
+    '
+    '''
+    RunPython "scripts.sample.hello_world_2"
 End Sub
 
 
@@ -41,6 +56,7 @@ Sub CB_SetInterpreter(control As IRibbonControl, text As String)
     '
     '''
     SetConfig "python", text
+    PYTHON_PATH = text
 End Sub
 
 
@@ -53,39 +69,16 @@ Sub CB_GetInterpreter(control As IRibbonControl, ByRef returnedVal)
 End Sub
 
 
-Sub CB_SetOutputPath(control As IRibbonControl, text As String)
-    '''
-    ' TO DO
-    '
-    '''
-    SetConfig "output", text
-End Sub
-
-
-Sub CB_GetOutputPath(control As IRibbonControl, ByRef returnedVal)
-    '''
-    ' TO DO
-    '
-    '''
-    returnedVal = OUTPUT_PATH
-End Sub
-
-
 Sub CB_Refresh(control As IRibbonControl)
     '''
     ' TO DO
     '
     '''
-    On Error GoTo RestartExcel
+    Call LoadConfig
     
-    Call GetConfig
+    ' restore Ribbon instance in case VBA script was stop unexpectedly
+    If myRibbon Is Nothing Then Set myRibbon = RestoreRibbon()
     myRibbon.Invalidate
-    
-    On Error GoTo 0
-    Exit Sub
-     
-RestartExcel:
-      MsgBox "Add-in crashed. Please restart Excel.", vbCritical, "Ribbon UI Refresh Failed"
     
 End Sub
 

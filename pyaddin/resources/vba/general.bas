@@ -1,4 +1,4 @@
-Attribute VB_Name = "general"
+Attribute VB_Name = "General"
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' GENERAL FUNCTIONS CREATED AUTOMATICALLY BY PYADDIN
 '
@@ -9,6 +9,8 @@ Attribute VB_Name = "general"
 ' https://github.com/dothinking/PyAddin
 '
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Public Declare Sub CopyMemory Lib "kernel32" Alias "RtlMoveMemory" (lpDest As Any, lpSource As Any, ByVal cBytes&)
+
 
 ' global parameters
 Public Const CFG_FILE = "main.cfg"
@@ -17,10 +19,15 @@ Public Const PYTHON_MAIN = "main.py"
 Public Const KEY_STATUS = "status"
 Public Const KEY_VALUE = "value"
 
+Public Const KEY_PYTHON = "python"
+Public Const KEY_OUTPUT = "output"
+Public Const KEY_STDOUT = "stdout"
+Public Const KEY_STDERR = "stderr"
+
 Public PYTHON_PATH As String
 Public OUTPUT_PATH As String
-Public STDOUT As String
-Public STDERR As String
+Public STDOUT_PATH As String
+Public STDERR_PATH As String
 
 
 Function RunPython(methodName As String, ParamArray args()) As Object
@@ -34,16 +41,15 @@ Function RunPython(methodName As String, ParamArray args()) As Object
     
     ' check python interpreter path
     Dim errs As String
-    If Not PYTHON_PATH Like "*.exe" Then PYTHON_PATH = PYTHON_PATH & ".exe"
     If Not FileExists(PYTHON_PATH) Then
-        errs = "Please set correct Python interpreter."
+        errs = "Please set correct Python interpreter or refresh settings."
         GoTo OUTPUT
     End If
     
     ' join command: python main.py workBookName pythonMethod arguments
     Dim python As String: python = """" & PYTHON_PATH & """ "
     Dim main As String: main = """" & ThisWorkbook.Path & "\" & PYTHON_MAIN & """ "
-    Dim wbName As String: wbName = """" & ActiveWorkbook.Name & """ "
+    Dim wbName As String: wbName = """" & ActiveWorkbook.name & """ "
     
     Dim param, strArgs As String, cmd As String
     For Each param In args
@@ -58,15 +64,12 @@ Function RunPython(methodName As String, ParamArray args()) As Object
     oShell.Run cmd, 0, 1
     
     ' results
-    Dim logOutput As String: logOutput = OUTPUT_PATH & STDOUT
-    Dim logErrors As String: logErrors = OUTPUT_PATH & STDERR
-    
-    If Not FileExists(logErrors) Then
+    If Not FileExists(STDERR_PATH) Then
         errs = "Run Python script failed."
         GoTo OUTPUT
     End If
     
-    errs = ReadTextFile(logErrors)
+    errs = ReadTextFile(STDERR_PATH)
     
 OUTPUT:
     Dim res As Object
@@ -74,7 +77,7 @@ OUTPUT:
 
     If errs = "" Then
         res.Add KEY_STATUS, True
-        res.Add KEY_VALUE, ReadTextFile(logOutput)
+        res.Add KEY_VALUE, ReadTextFile(STDOUT_PATH)
     Else:
         res.Add KEY_STATUS, False
         res.Add KEY_VALUE, errs
@@ -90,63 +93,43 @@ OUTPUT:
 End Function
 
 
-Sub GetConfig()
+Sub LoadConfig()
     '''
     ' get configuration data from main.cfg
     '
     '''
-    Dim cfg_path As String, str As String
-    
-    ' default value if no find
-    PYTHON_PATH = ""
-    OUTPUT_PATH = ThisWorkbook.Path & "\" & "outputs" & "\"
-    STDOUT = "output.log"
-    STDERR = "errors.log"
+    PYTHON_PATH = GetConfig(KEY_PYTHON)
+    OUTPUT_PATH = ThisWorkbook.Path & "\" & GetConfig(KEY_OUTPUT) & "\"
+    STDOUT_PATH = OUTPUT_PATH & GetConfig(KEY_STDOUT)
+    STDERR_PATH = OUTPUT_PATH & GetConfig(KEY_STDERR)
+End Sub
 
-    cfg_path = ThisWorkbook.Path & "\" & CFG_FILE
-    If Not FileExists(cfg_path) Then Exit Sub
+
+Function GetConfig(sName As String, Optional sValue As String) As String
+    '''
+    ' get specified configuration data from main.cfg
+    '
+    '''
+    GetConfig = sValue
+    
+    Dim cfg_path As String: cfg_path = ThisWorkbook.Path & "\" & CFG_FILE
+    If Not FileExists(cfg_path) Then Exit Function
+    
+    Dim str As String
+    Dim target As String: target = "[" & sName & "]"
         
     Open cfg_path For Input As #1
     Do While Not EOF(1)
         Line Input #1, str
         str = Trim(str)
         
-        ' skip empty line o comment line
-        If str = "" Or str Like "[#]*" Then
-        
-        ' python path
-        ElseIf str = "[python]" Then
+        If str = target Then
             Line Input #1, str
-            str = Trim(str)
-            If str Like "[#]*" Then
-                PYTHON_PATH = ""
-            ElseIf str Like ".\*" Then
-                PYTHON_PATH = ThisWorkbook.Path & Right(str, Len(str) - 1)
-            ElseIf str Like "\*" Then
-                PYTHON_PATH = ThisWorkbook.Path & str
-            Else
-                PYTHON_PATH = str
-            End If
-        
-        ' output path
-        ElseIf str = "[output]" Then
-            Line Input #1, str
-            str = Trim(str)
-            If Not str Like "[#]*" Then OUTPUT_PATH = str & "\"
-            
-        ' standard output/error
-        ElseIf str = "[stdout]" Then
-            Line Input #1, str
-            str = Trim(str)
-            If Not str Like "[#]*" Then STDOUT = str
-        ElseIf str = "[stderr]" Then
-            Line Input #1, str
-            str = Trim(str)
-            If Not str Like "[#]*" Then STDERR = str
+            GetConfig = str
         End If
     Loop
     Close #1
-End Sub
+End Function
 
 
 Sub SetConfig(sName As String, Optional sValue As String)
@@ -198,10 +181,8 @@ Sub ClearOutput()
     ' remove output/error log files
     '
     '''
-    Dim logOutput As String: logOutput = OUTPUT_PATH & STDOUT
-    Dim logErrors As String: logErrors = OUTPUT_PATH & STDERR
-    If FileExists(logOutput) Then Kill logOutput
-    If FileExists(logErrors) Then Kill logErrors
+    If FileExists(STDOUT_PATH) Then Kill STDOUT_PATH
+    If FileExists(STDERR_PATH) Then Kill STDERR_PATH
 End Sub
 
 Function FileExists(ByVal FileSpec As String) As Boolean
@@ -234,4 +215,19 @@ Function ReadTextFile(filename As String) As String
     
     ReadTextFile = txt
     
+End Function
+
+
+Function RestoreRibbon()
+    '''
+    ' Restore Ribbon UI instance from stored pointer.
+    '
+    '''
+    Dim p As Long: p = GetConfig("ribbon")
+
+    Dim ribbon As Object
+    Call CopyMemory(ribbon, p, 4)
+    
+    Set RestoreRibbon = ribbon
+
 End Function

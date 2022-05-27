@@ -8,9 +8,11 @@ import win32com.client
 KEY_CALLER = 'caller'
 KEY_LOGGER = 'logger'
 
-
 CONFIG_FILENAME = 'main.cfg'
-
+OUTPUT_PATH_NAME = 'outputs'
+LOG_DEBUG_NAME  = 'log.log'
+LOG_ERROR_NAME  = 'errors.log'
+LOG_OUTPUT_NAME = 'output.log'
 
 
 def start():
@@ -64,11 +66,10 @@ def __get_caller_workbook(name:str):
 def __config_logger(working_path:str) -> logging.Logger:
     '''Log settings based on configuration file under working path.'''
     # log files
-    config_file = os.path.join(working_path, CONFIG_FILENAME)
-    output_file, error_file, log_file = __check_log_files(config_file=config_file)
+    output_file, error_file, debug_file = __check_log_files(working_path=working_path)
 
     # full level log
-    log = logging.FileHandler(filename=log_file, mode='w', encoding='utf-8')
+    log = logging.FileHandler(filename=debug_file, mode='w', encoding='utf-8')
     log.setLevel(level=logging.DEBUG)
     fmt = logging.Formatter(fmt="%(asctime)s - %(name)s - %(levelname)s -%(module)s:  %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
     log.setFormatter(fmt)
@@ -95,33 +96,35 @@ def __config_logger(working_path:str) -> logging.Logger:
     return logger
 
 
-def __check_log_files(config_file:str):
+def __check_log_files(working_path:str):
     '''Get log file names from configuration file.'''
     # default value
-    output_path = 'outputs'
-    output_name, error_name, log_name = 'output.log', 'errors.log', 'log.log'
+    path_name = OUTPUT_PATH_NAME
+    output_name, error_name, debug_name = LOG_OUTPUT_NAME, LOG_ERROR_NAME, LOG_DEBUG_NAME
 
     # check config file
+    config_file = os.path.join(working_path, CONFIG_FILENAME)
     with open(config_file, 'r') as f:
         while True:
             line = f.readline()
             if not line:
                 break
             elif line.startswith('[output]'):
-                output_path = f.readline().strip()
+                path_name = f.readline().strip()
             elif line.startswith('[stdout]'):
                 output_name = f.readline().strip()
             elif line.startswith('[stderr]'):
                 error_name = f.readline().strip()
             elif line.startswith('[log]'):
-                log_name = f.readline().strip()
+                debug_name = f.readline().strip()
     # create output path
+    output_path = os.path.join(working_path, path_name)
     if not os.path.exists(output_path):
         os.mkdir(output_path)
     
     # join path
     output_file = os.path.join(output_path, output_name)
     error_file = os.path.join(output_path, error_name)
-    log_file = os.path.join(output_path, log_name)
+    debug_file = os.path.join(output_path, debug_name)
     
-    return output_file, error_file, log_file
+    return output_file, error_file, debug_file

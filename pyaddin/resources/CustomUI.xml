@@ -10,11 +10,16 @@ Custom UI definition. Please refer to the links below for detail.
 			<tab id="AddinMakerTab" label="Addin Maker">
 				<group id="yourGroup1" label="Your Group 1">
 					<!-- MODIFY YOUR RIBBON CONTROL HERE -->
-					<button id="sample" label="Sample" 
-						imageMso="Help" size="large" 
-						onAction="CB_Test" 
-						screentip="Test" 
-						supertip="Sample Button." />
+					<button id="sample1" label="Sample 1" 
+						imageMso="AppointmentColor3" size="large" 
+						onAction="CB_Test_1" 
+						screentip="Sample Button" 
+						supertip="Illustrating case that does everything in Python script with win32com." />
+					<button id="sample2" label="Sample 2" 
+						imageMso="AppointmentColor6" size="large" 
+						onAction="CB_Test_2" 
+						screentip="Sample Button" 
+						supertip="Illustrating case that transferring input and output between VBA and Python." />
 				</group>
 
 				<group id="yourGroup2" label="Your Group 2">
@@ -29,19 +34,13 @@ Custom UI definition. Please refer to the links below for detail.
 						getText="CB_GetInterpreter" 
 						screentip="Interpreter" 
 						supertip="The full path to python.exe." />
-					<editBox id="output" label="Output Path" 
-						onChange="CB_SetOutputPath" 
-						getText="CB_GetOutputPath" 
-						screentip="Output Path" 
-						supertip="Output path for result and log files." />
-					<button id="refresh" label="Refresh" 
-						imageMso="Help" size="normal" 
+					<button id="refresh" label="Refresh Settings" 
+						imageMso="RefreshWebView" size="normal" 
 						onAction="CB_Refresh" 
 						screentip="Refresh" 
 						supertip="Reload all settings." />
-					<separator id="s1"/>
 					<button id="about" label="About" 
-						imageMso="Help" size="large" 
+						imageMso="Help" size="normal" 
 						onAction="CB_About" 
 						screentip="About" 
 						supertip="About this Add-in, e.g., features, version." />
