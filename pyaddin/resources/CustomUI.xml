@@ -7,7 +7,7 @@ Custom UI definition. Please refer to the links below for detail.
 <customUI onLoad="RibbonOnLoad" xmlns="http://schemas.microsoft.com/office/2006/01/customui">
 	<ribbon startFromScratch="false">
 		<tabs>
-			<tab id="AddinMakerTab" label="Addin Maker">
+			<tab id="PyAddinTab" label="PyAddin">
 				<group id="yourGroup1" label="Your Group 1">
 					<!-- MODIFY YOUR RIBBON CONTROL HERE -->
 					<button id="sample1" label="Sample 1" 
