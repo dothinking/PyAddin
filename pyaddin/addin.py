@@ -1,10 +1,11 @@
 import os
 import logging
+import shutil
 import xml.etree.ElementTree as ET
 import win32com.client
 from .xlam.ui import UI
 from .xlam.vba import VBA
-from .share import (AddInException, copytree)
+from .share import AddInException
 
 
 # logging
@@ -18,12 +19,12 @@ SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 RESOURCE_PATH = os.path.join(SCRIPT_PATH, 'resources')
 
 RESOURCE_ADDIN = 'xlam'
-RESOURCE_PYTHON = 'python'
+RESOURCE_PYTHON = 'scripts'
 RESOURCE_VBA = 'vba'
-
+PYTHON_MAIN = 'main.py'
+PYTHON_CONFIG = 'main.cfg'
 VBA_GENERAL = 'general'
 VBA_MENU = 'ribbon'
-
 CUSTOM_UI = 'CustomUI.xml'
 
 
@@ -92,8 +93,15 @@ class Addin:
             vba.import_module(general_module)
 
             # 3. copy main python scripts
-            python_module = os.path.join(RESOURCE_PATH, RESOURCE_PYTHON)
-            copytree(python_module, self.path)
+            if RESOURCE_PATH.upper()!=self.path.upper():
+                python_scripts = os.path.join(RESOURCE_PATH, RESOURCE_PYTHON)
+                target_scripts = os.path.join(self.path, RESOURCE_PYTHON)
+                shutil.copytree(python_scripts, target_scripts)
+
+                python_main = os.path.join(RESOURCE_PATH, PYTHON_MAIN)
+                python_config = os.path.join(RESOURCE_PATH, PYTHON_CONFIG)
+                shutil.copy(python_main, self.path)
+                shutil.copy(python_config, self.path)
         
         # save vba modules
         vba.save()

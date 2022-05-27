@@ -24,7 +24,7 @@ class UI:
         '''
         # copy template files to current path if they're not under current path
         work_path = os.path.join(self.path, os.path.basename(template_path))
-        if work_path != template_path:
+        if work_path.upper() != template_path.upper():
             # delete dest dir if exists, otherwise the copy will be forbidden
             if os.path.isdir(work_path): shutil.rmtree(work_path)
             shutil.copytree(template_path, work_path)

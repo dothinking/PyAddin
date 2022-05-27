@@ -6,6 +6,7 @@ dist/
 # test
 test/
 sample/
+*.xlam
 
 # temp file
 *.pyc
