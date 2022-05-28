@@ -1,4 +1,5 @@
-[中文](./README_CN.md) | English
+English | [Chinese](README_CN.md)
+
 
 # PyAddin
 

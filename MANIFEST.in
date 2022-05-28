@@ -1,1 +1,11 @@
-recursive-include pyaddin/res *
+include *.md
+include LICENSE
+include requirements.txt
+include add-in.png
+
+include pyaddin/resources/main.py
+include pyaddin/resources/main.cfg
+include pyaddin/resources/CustomUI.xml
+recursive-include pyaddin/resources/scripts *.py
+recursive-include pyaddin/resources/vba *
+recursive-include pyaddin/resources/xlam *
