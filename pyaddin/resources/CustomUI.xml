@@ -1,0 +1,51 @@
+<!--
+Custom UI definition. Please refer to the links below for detail.
+- https://docs.microsoft.com/en-us/openspecs/office_standards/ms-customui/edc80b05-9169-4ff7-95ee-03af067f35b1
+- https://docs.microsoft.com/en-us/previous-versions/office/developer/office-2007/aa338202(v%3doffice.12)
+-->
+
+<customUI onLoad="RibbonOnLoad" xmlns="http://schemas.microsoft.com/office/2006/01/customui">
+	<ribbon startFromScratch="false">
+		<tabs>
+			<tab id="PyAddinTab" label="PyAddin">
+				<group id="yourGroup1" label="Your Group 1">
+					<!-- MODIFY YOUR RIBBON CONTROL HERE -->
+					<button id="sample1" label="Sample 1" 
+						imageMso="AppointmentColor3" size="large" 
+						onAction="CB_Sample_1" 
+						screentip="Sample Button" 
+						supertip="Example 1: simple data transferring between VBA and Python." />
+					<button id="sample2" label="Sample 2" 
+						imageMso="AppointmentColor6" size="large" 
+						onAction="CB_Sample_2" 
+						screentip="Sample Button" 
+						supertip="Example 2: do anythng win32com can in Python script." />
+				</group>
+
+				<group id="yourGroup2" label="Your Group 2">
+					<!-- MORE GROUPS IF NECESSARY -->
+					
+				</group>
+
+				<!-- DON'T CHANGE THE FOLLOWING ITEMS  -->
+				<group id="settingsGroup" label="Setting">					
+					<editBox id="interpreter" label="Python Interpreter" 
+						onChange="CB_SetInterpreter" 
+						getText="CB_GetInterpreter" 
+						screentip="Interpreter" 
+						supertip="The full path to python.exe." />
+					<button id="refresh" label="Refresh Settings" 
+						imageMso="RefreshWebView" size="normal" 
+						onAction="CB_Refresh" 
+						screentip="Refresh" 
+						supertip="Reload all settings." />
+					<button id="about" label="About" 
+						imageMso="Help" size="normal" 
+						onAction="CB_About" 
+						screentip="About" 
+						supertip="About this Add-in, e.g., features, version." />
+				</group>
+			</tab>
+		</tabs>
+	</ribbon>
+</customUI>
